@@ -24,4 +24,5 @@ See `HANDOFF.md` for the full design and `FAKED.md` for what is simulated.
 | + | Leak engine + exceptions inbox (home) | done (tests: `npx tsx scripts/test-leaks.ts`) |
 | + | Dashboard: 9 charts with as-of time machine and filters (`/dashboard`) | done |
 | + | Try cases: 6 runnable scenarios with live checklists (`/cases`) | done |
+| + | Passcode lock (`DEMO_PASSCODE`), AI-calls-left meter, display currency INR/SGD/USD | done |
 | + | AI call cap (50, `ai_calls` ledger; run `supabase/002_ai_calls.sql`) | done |

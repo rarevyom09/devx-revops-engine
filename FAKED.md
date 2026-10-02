@@ -6,8 +6,9 @@ Living note. Updated as the build progresses.
 - **All data is invented.** People, deals, invoices, payments, timesheets and rates come from `src/lib/demo-data.ts`.
 - **No Zoho integration.** Data enters via the Ingest tab (paste, CSV, quick form) instead of CRM/Books sync.
 - **Variable pay at stake = 5% of invoice amount.** Invented rule; the real plan is unknown.
-- **Rates are invented** (IN ₹2,000/h, SG ₹6,500/h), everything in INR. No FX handling.
-- **No auth, no Row Level Security.** Single-user demo. All writes go through server routes using the Supabase service-role key; the browser never talks to the DB directly.
+- **Rates are invented** (IN ₹2,000/h, SG ₹6,500/h). All data is stored and entered in INR.
+- **Currency switch (INR / SGD / USD) is display-only, at fixed demo FX** (1 SGD = ₹65, 1 USD = ₹84, as of 2 Oct 2026). A browser-side layer rewrites every ₹ amount on screen, including server-generated text; inputs stay INR. Real cross-entity FX (which currency governs, dated rates, revaluation) is an open question.
+- **One shared demo passcode, not user auth, and no Row Level Security.** The whole app (pages and APIs) sits behind `DEMO_PASSCODE`; the cookie holds a hash of it. There are no user accounts, so approvals record a typed name, not a verified identity. Single-tenant demo. All writes go through server routes using the Supabase service-role key; the browser never talks to the DB directly.
 - **Partner handling is a flag only.** No MDF accounting or deal-registration logic.
 - **Calendar quarters assumed** for the realization deadline (one constant in `src/lib/clawback.ts`). Indian FY quarters (Apr–Mar) cover the same three-month blocks, so deadlines are identical; only quarter labels change.
 - **Clawback is per invoice**, summed per owner. Owner-quarter netting is not modelled.
