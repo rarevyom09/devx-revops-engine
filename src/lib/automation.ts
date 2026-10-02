@@ -1,11 +1,13 @@
 import "server-only";
 import { analyseRawDeal } from "./analyse";
+import { assistDeal } from "./assist";
 import { draftBrief } from "./brief-draft";
 import { aiUsage } from "./claude";
 import { db } from "./db";
 import { normalizeQuestions } from "./integrity";
 import { notify } from "./notify";
 import { getSettings, type Settings } from "./settings";
+import type { Snapshot } from "./snapshot";
 
 // Event-driven AI: ingest -> analyse, approval -> brief. Runs after the response
 // (next/server `after`), so people see results arrive as notifications.
@@ -50,7 +52,7 @@ export async function autoAnalyse(rawIds: string[]) {
           title: `${o.client_name ?? "Deal"} analysed: ${o.records.length} record${o.records.length === 1 ? "" : "s"}${o.is_blended ? ", blended deal split" : ""}`,
           body: `${r.analysis.confidence} confidence${flags ? ` · ${flags} failed check(s)` : ""}${qs ? ` · ${qs} question(s) for the rep` : ""}. Review and approve.`,
           href: `/pipeline?raw=${id}`,
-          owner_id: raw.owner_id,
+          owner_id: null, // ops queue; the rep is notified separately about questions
           dedupe_key: `analysed:${r.analysis.id}`,
         }]);
       } else if (!r.conflict) {
@@ -82,6 +84,61 @@ export async function autoBrief(dealIds: string[]) {
       }
     } catch (e) {
       await notify([{ kind: "ai_failed", severity: "warning", title: `Auto-brief failed: ${deal.name}`, body: e instanceof Error ? e.message : String(e), href: "/onboarding", owner_id: deal.owner_id }]);
+    }
+  }
+}
+
+// Leaks that need a message sent, not just a fix in the tool.
+const NEEDS_FOLLOW_UP = ["cash-risk-", "cash-clawback-", "margin-floor-", "booking-renewal-"];
+const MAX_DRAFTS_PER_SCAN = 3;
+
+/**
+ * When a new critical/warning leak needs a follow-up (payment chase, change
+ * request, renewal note), draft it once and notify the owner. The human reviews
+ * and sends; nothing leaves the platform automatically.
+ */
+export async function autoDraftFollowUps(s: Snapshot) {
+  const settings = await getSettings();
+  if (!settings.auto_drafts) return;
+  const candidates = s.alerts.filter(
+    (a) => a.ref.deal_id && a.severity !== "info" && NEEDS_FOLLOW_UP.some((p) => a.id.startsWith(p)),
+  );
+  if (!candidates.length) return;
+  const { data: existing } = await db().from("action_drafts").select("alert_id").in("alert_id", candidates.map((a) => a.id));
+  const done = new Set((existing ?? []).map((r) => r.alert_id));
+  for (const a of candidates.filter((c) => !done.has(c.id)).slice(0, MAX_DRAFTS_PER_SCAN)) {
+    if (!(await budgetOk(settings))) return;
+    // Claim the leak first: the unique alert_id stops a parallel scan drafting it twice.
+    const claim = await db()
+      .from("action_drafts")
+      .insert({ deal_id: a.ref.deal_id, alert_id: a.id, alert_title: a.title, status: "drafting" })
+      .select("id")
+      .single();
+    if (claim.error) continue;
+    const deal = s.deals.find((d) => d.id === a.ref.deal_id);
+    try {
+      const r = await assistDeal(a.ref.deal_id!);
+      if (r.ok) {
+        await db()
+          .from("action_drafts")
+          .update({ status: "ready", assist: r.assist, unverified_amounts: r.unverified_amounts, model: r.model, updated_at: new Date().toISOString() })
+          .eq("id", claim.data.id);
+        const what = r.assist.draft_message ? `"${r.assist.draft_message.subject}"` : "next steps";
+        await notify([{
+          kind: "draft_ready",
+          severity: a.severity,
+          title: `Follow-up drafted: ${a.title}`,
+          body: `${deal?.name ?? a.subject} · ${what} is ready to review${r.unverified_amounts.length ? " (check flagged ₹ figures)" : ""}. Nothing is sent until you send it.`,
+          href: "/dashboard",
+          owner_id: deal?.owner_id ?? null,
+          dedupe_key: `draft:${a.id}`,
+        }]);
+      } else {
+        const detail = r.notFound ? "deal not found" : `${r.ai.reason}: ${r.ai.detail}`;
+        await db().from("action_drafts").update({ status: "failed", detail, updated_at: new Date().toISOString() }).eq("id", claim.data.id);
+      }
+    } catch (e) {
+      await db().from("action_drafts").update({ status: "failed", detail: e instanceof Error ? e.message : String(e) }).eq("id", claim.data.id);
     }
   }
 }

@@ -1,6 +1,7 @@
 import "server-only";
 import { asData, generateJSON, MODEL, type AIFailure } from "./claude";
 import { db, must } from "./db";
+import { notify } from "./notify";
 import { ensureQuestions, IntegrityOutput, systemPrompt, validateProposal, type RepAnswer } from "./integrity";
 
 export type AnalyseResult =
@@ -30,7 +31,7 @@ export async function analyseRawDeal(rawDealId: string, answers: RepAnswer[] = [
 
   // Only code may tag a question "added by checks": drop the tag if the model set it.
   const fromModel = { ...ai.data, ambiguities: ai.data.ambiguities.map((q) => ({ question: q.question, field: q.field, record_index: q.record_index })) };
-  const output = ensureQuestions(fromModel, answers);
+  const output = ensureQuestions(fromModel, answers, raw.raw_text);
   const validation = validateProposal(raw.raw_text, output, today, answers);
   const analysis = must(
     await db()
@@ -41,10 +42,27 @@ export async function analyseRawDeal(rawDealId: string, answers: RepAnswer[] = [
         output,
         confidence: validation.confidence,
         validator_flags: { ...validation, today, answers_used: answers.length },
+        // Answers carry forward so the next reviewer sees what the rep already said.
+        rep_answers: answers.length ? answers : null,
       })
       .select()
       .single(),
   );
   must(await db().from("raw_deals").update({ status: "analysed" }).eq("id", raw.id));
+
+  // Questions go to the rep who owns the deal, not only to ops.
+  const open = output.ambiguities.length;
+  if (open) {
+    const { data: r } = await db().from("raw_deals").select("owner_id").eq("id", raw.id).single();
+    await notify([{
+      kind: "rep_question",
+      severity: "warning",
+      title: `${output.client_name ?? "Your deal"}: ${open} question${open === 1 ? "" : "s"} from the integrity check`,
+      body: "Answer them in your Rep inbox; the deal can't be approved cleanly until they're resolved.",
+      href: `/rep?raw=${raw.id}`,
+      owner_id: r?.owner_id ?? null,
+      dedupe_key: `repq:${analysis.id}`,
+    }]);
+  }
   return { ok: true, analysis };
 }

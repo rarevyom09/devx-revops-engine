@@ -11,7 +11,7 @@ export async function GET() {
 }
 
 const Body = z.union([
-  z.object({ key: z.enum(["auto_analyse", "auto_brief"]), value: z.boolean() }),
+  z.object({ key: z.enum(["auto_analyse", "auto_brief", "auto_drafts"]), value: z.boolean() }),
   z.object({ key: z.literal("ai_reserve"), value: z.number().int().min(0).max(50) }),
 ]);
 

@@ -321,6 +321,7 @@ function DealDetail({ item, onChange }: { item: QueueItem; onChange: () => void 
                 target={fieldLabel(q, records)}
                 value={answers[i] ?? ""}
                 onChange={(v) => answer(i, v)}
+                by={a?.rep_answers?.find((x) => x.index === i)?.answered_by}
               />
             ))}
           </div>
@@ -616,7 +617,7 @@ function fieldLabel(q: RepQuestion, records: EditRecord[]) {
   return isRecordField && r ? `${r.name || "record"} · ${FIELD_LABEL[q.field]}` : FIELD_LABEL[q.field];
 }
 
-function QuestionRow({ q, target, value, onChange }: { q: RepQuestion; target: string; value: string; onChange: (v: string) => void }) {
+function QuestionRow({ q, target, value, onChange, by }: { q: RepQuestion; target: string; value: string; onChange: (v: string) => void; by?: string }) {
   const cls = "mt-1 block w-full rounded-md border border-zinc-300 px-2 py-1.5 text-sm";
   let input: React.ReactNode;
   if (q.field === "close_date") input = <input type="date" className={cls} value={value} onChange={(e) => onChange(e.target.value)} />;
@@ -650,6 +651,7 @@ function QuestionRow({ q, target, value, onChange }: { q: RepQuestion; target: s
     <div className={`grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_220px] ${value.trim() ? "border-emerald-200 bg-emerald-50/40" : "border-amber-200 bg-amber-50/40"}`}>
       <div className="text-sm text-zinc-800">
         {q.question}
+        {by && <span className="ml-1.5 rounded bg-emerald-100 px-1 py-0.5 text-[10px] font-medium uppercase text-emerald-800">answered by {by}</span>}
         {q.added_by === "checks" && (
           <span className="ml-1.5 rounded bg-sky-100 px-1 py-0.5 text-[10px] font-medium uppercase text-sky-800" title="The AI assumed this without asking; code added the question.">
             added by checks

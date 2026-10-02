@@ -8,7 +8,7 @@ import { db } from "./db";
 // model with structured outputs; the deterministic validators backstop it.
 export const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-4-5";
 // Hard cap on total Claude calls for the project, enforced via the ai_calls table.
-export const AI_CALL_LIMIT = Number(process.env.AI_CALL_LIMIT || 50);
+export const AI_CALL_LIMIT = Number(process.env.AI_CALL_LIMIT || 100);
 
 let client: Anthropic | null = null;
 function getClient() {

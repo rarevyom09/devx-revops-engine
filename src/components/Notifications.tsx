@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 
 type Note = {
   id: string;
-  kind: "ai_analysed" | "ai_failed" | "brief_drafted" | "leak";
+  kind: "ai_analysed" | "ai_failed" | "brief_drafted" | "leak" | "rep_question" | "rep_answered" | "draft_ready";
   severity: "critical" | "warning" | "info";
   title: string;
   body: string | null;
@@ -16,10 +16,17 @@ type Note = {
   created_at: string;
 };
 type Person = { id: string; name: string; role: string };
-type Settings = { auto_analyse: boolean; auto_brief: boolean; ai_reserve: number };
 
 const DOT = { critical: "bg-red-600", warning: "bg-amber-500", info: "bg-violet-500" };
-const KIND = { ai_analysed: "AI analysed", ai_failed: "AI paused", brief_drafted: "Brief drafted", leak: "Leak" };
+const KIND = {
+  ai_analysed: "AI analysed",
+  ai_failed: "AI paused",
+  brief_drafted: "Brief drafted",
+  leak: "Leak",
+  rep_question: "Question for rep",
+  rep_answered: "Rep answered",
+  draft_ready: "Follow-up drafted",
+};
 
 function ago(iso: string) {
   const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
@@ -169,45 +176,5 @@ export function NotificationBell() {
           document.body,
         )}
     </>
-  );
-}
-
-export function AutomationCard() {
-  const [s, setS] = useState<Settings | null>(null);
-  useEffect(() => {
-    fetch("/api/settings", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => j && setS(j));
-  }, []);
-  async function toggle(key: "auto_analyse" | "auto_brief") {
-    if (!s) return;
-    const res = await fetch("/api/settings", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ key, value: !s[key] }),
-    });
-    if (res.ok) setS(await res.json());
-  }
-  if (!s) return null;
-  const row = (key: "auto_analyse" | "auto_brief", label: string) => (
-    <label className="flex cursor-pointer items-center justify-between gap-2 text-xs text-zinc-700">
-      {label}
-      <button
-        role="switch"
-        aria-checked={s[key]}
-        onClick={() => toggle(key)}
-        className={`relative h-4 w-7 rounded-full transition ${s[key] ? "bg-violet-600" : "bg-zinc-300"}`}
-      >
-        <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition ${s[key] ? "left-3.5" : "left-0.5"}`} />
-      </button>
-    </label>
-  );
-  return (
-    <div className="space-y-1.5 rounded-lg border border-zinc-200 p-3" title={`Automation pauses when ${s.ai_reserve} AI calls are left.`}>
-      <div className="text-xs font-medium text-zinc-700">Automation</div>
-      {row("auto_analyse", "Analyse new deals")}
-      {row("auto_brief", "Draft brief on approval")}
-      <p className="text-[10px] leading-snug text-zinc-500">Pauses with {s.ai_reserve} AI calls left.</p>
-    </div>
   );
 }

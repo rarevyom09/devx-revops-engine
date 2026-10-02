@@ -129,6 +129,7 @@ function GroupDetail({ g, onChanged }: { g: LeakGroup; onChanged: () => void }) 
               {it.impact != null && <span className="ml-auto text-sm font-semibold tabular-nums">{inr(it.impact)}</span>}
             </div>
             <p className="mt-0.5 text-sm text-zinc-600">{it.detail}</p>
+            {it.draft && <DraftView d={it.draft} onChanged={onChanged} />}
             <div className="mt-2 flex flex-wrap gap-2">
               {g.actions.map((a) => (
                 <Action key={a} kind={a} item={it} onChanged={onChanged} />
@@ -281,7 +282,7 @@ function Action({ kind, item, onChanged }: { kind: ActionKind; item: LeakItem; o
             })
           }
         >
-          {busy ? "Claude is thinking…" : "Draft next step"} <EngineBadge engine="ai" />
+          {busy ? "Claude is thinking…" : item.draft?.status === "ready" ? "Redraft" : "Draft next step"} <EngineBadge engine="ai" />
         </button>,
       );
     case "record_payment":
@@ -386,6 +387,67 @@ function Action({ kind, item, onChanged }: { kind: ActionKind; item: LeakItem; o
         ),
       );
   }
+}
+
+// A follow-up the system drafted on its own when this leak appeared.
+function DraftView({ d, onChanged }: { d: NonNullable<LeakItem["draft"]>; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  if (d.status === "dismissed") return null;
+  if (d.status === "drafting") return <Note tone="violet">Drafting a follow-up automatically…</Note>;
+  if (d.status === "failed") return <Note tone="amber">Automatic follow-up draft failed ({d.detail}). Use Draft next step.</Note>;
+  const a = d.assist;
+  if (!a) return null;
+  const unverified = d.unverified_amounts ?? [];
+  const mark = async (status: "sent" | "dismissed") => {
+    setBusy(true);
+    await post("/api/drafts", { id: d.id, status });
+    setBusy(false);
+    onChanged();
+  };
+  return (
+    <div className={`mt-2 space-y-2 rounded-md border p-3 text-sm ${d.status === "sent" ? "border-emerald-200 bg-emerald-50/50" : "border-violet-200 bg-violet-50/50"}`}>
+      <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-wide text-violet-800">
+        Drafted automatically when this leak appeared · not sent
+        {d.status === "sent" && <span className="rounded bg-emerald-100 px-1.5 text-emerald-800">marked sent</span>}
+      </div>
+      <p>{a.situation}</p>
+      <ul className="list-disc pl-5 text-zinc-700">
+        {a.next_steps.map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ul>
+      {a.draft_message && (
+        <div className="rounded border border-zinc-200 bg-white p-2 text-xs">
+          <div><b>To:</b> {a.draft_message.to}</div>
+          <div><b>Subject:</b> {a.draft_message.subject}</div>
+          <p className="mt-1 whitespace-pre-wrap">{a.draft_message.body}</p>
+        </div>
+      )}
+      {unverified.length > 0 ? (
+        <Note tone="red">Check before sending: {unverified.map(inr).join(", ")} not found in this deal&apos;s data.</Note>
+      ) : (
+        <p className="text-xs text-emerald-700">✓ Every ₹ figure matches the deal&apos;s data.</p>
+      )}
+      {d.status === "ready" && (
+        <div className="flex flex-wrap gap-2">
+          {a.draft_message && (
+            <button
+              className={plainBtn}
+              onClick={() => navigator.clipboard.writeText(`To: ${a.draft_message!.to}\nSubject: ${a.draft_message!.subject}\n\n${a.draft_message!.body}`)}
+            >
+              Copy message
+            </button>
+          )}
+          <button className={plainBtn} disabled={busy} onClick={() => mark("sent")}>
+            Mark sent
+          </button>
+          <button className={plainBtn} disabled={busy} onClick={() => mark("dismissed")}>
+            Dismiss
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 type Field = { key: string; label: string; initial: string; type?: string; options?: string[] };

@@ -41,7 +41,15 @@ export const LEAK_TYPES: LeakType[] = [
   { key: "margin-blind", stage: "margin", title: "Billing but no effort logged", leak: "Margin is invisible without timesheets.", steps: ["Ask delivery to log hours"], actions: ["log_hours"] },
 ];
 
-export type LeakItem = Alert & { deal_name: string | null; milestone: string | null; outstanding: number | null };
+export type ActionDraft = {
+  id: string;
+  status: "drafting" | "ready" | "failed" | "sent" | "dismissed";
+  assist: { situation: string; next_steps: string[]; draft_message: { to: string; subject: string; body: string } | null } | null;
+  unverified_amounts: number[] | null;
+  detail: string | null;
+  created_at: string;
+};
+export type LeakItem = Alert & { deal_name: string | null; milestone: string | null; outstanding: number | null; draft: ActionDraft | null };
 export type LeakGroup = LeakType & {
   severity: Severity;
   count: number;

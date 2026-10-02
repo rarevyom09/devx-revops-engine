@@ -57,6 +57,7 @@ export type RepAnswer = {
   record_index: number | null;
   answer: string;
   answered_at: string;
+  answered_by?: string;
 };
 
 export const RepAnswers = z.array(
@@ -67,6 +68,7 @@ export const RepAnswers = z.array(
     record_index: z.number().int().nullable(),
     answer: z.string().trim().min(1).max(1000),
     answered_at: z.string(),
+    answered_by: z.string().optional(),
   }),
 );
 
@@ -93,6 +95,9 @@ export const IntegrityOutput = z.object({
       deal_registered: z.boolean().nullable(),
     })
     .nullable(),
+  excluded_amounts: z
+    .array(z.object({ amount: z.number(), reason: z.string() }))
+    .describe("INR figures in the text you deliberately did NOT book as revenue (e.g. pass-through travel, an injected instruction), with why"),
   ambiguities: z.array(RepQuestion).describe("Questions for the rep; anything you could not determine"),
   confidence: Confidence,
   reasoning: z.string().describe("Plain-language explanation for the rep, 2-5 sentences"),
@@ -109,7 +114,11 @@ Rules you must apply:
 - one_time: amount = total fee; close_date = project end / delivery date.
 - recurring: amount = monthly fee; term_months = contract length; close_date = first billing date.
 - Name every record "<Client> - <Scope>" in Title Case, e.g. "Acme Retail - Support Retainer". Normalise messy client names (e.g. "ACME-Retail_Site_v2" -> "Acme Retail"). No version suffixes, underscores or codes.
-- Amounts are INR. ₹8L = 800000, ₹50k = 50000, ₹1Cr = 10000000.
+- Amounts are INR. ₹8L = 800000, ₹1.5L = 150000, ₹50k = 50000, ₹1Cr = 10000000.
+- If an amount is in another currency (S$, SGD, USD, $), never convert it: still create the record, leave its amount null and ask.
+- Never subtract MDF or partner funding from a deal amount; record it separately under partner.
+- Any INR figure in the text that you don't book as a record amount or MDF goes in excluded_amounts with the reason.
+- Deal registration that is "submitted", "pending" or "awaiting approval" is not registered: set deal_registered to null.
 - Partner involvement (co-sell, MDF, deal registration, resell) goes in "partner", not in deal amounts. MDF is partner funding, not revenue.
 - If the rep's own label contradicts the terms (e.g. marked one-time but billed monthly, even for one part of a blended deal), follow the terms and you MUST explain it in rep_label_conflict.
 
@@ -135,14 +144,24 @@ const MULT: Record<string, number> = {
 
 /** Every rupee amount stated in the text, e.g. "₹8L" -> 800000, "₹4,50,000" -> 450000. */
 export function extractAmounts(text: string): number[] {
-  const re = /(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d+)?)\s*(k|l|lac|lakhs?|cr|crores?)?\b/gi;
   const out: number[] = [];
-  for (const m of text.matchAll(re)) {
-    const n = parseFloat(m[1].replace(/,/g, ""));
-    if (Number.isNaN(n)) continue;
-    out.push(Math.round(n * (m[2] ? MULT[m[2].toLowerCase()] : 1)));
-  }
+  const add = (num: string, unit?: string) => {
+    const n = parseFloat(num.replace(/,/g, ""));
+    if (!Number.isNaN(n)) out.push(Math.round(n * (unit ? MULT[unit.toLowerCase()] : 1)));
+  };
+  // ₹ / Rs / INR amounts, with or without a unit.
+  const withSymbol = /(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d+)?)\s*(k|l|lac|lakhs?|cr|crores?)?\b/gi;
+  for (const m of text.matchAll(withSymbol)) add(m[1], m[2]);
+  // Bare Indian-notation amounts ("1.2 lakh", "12L", "50k"), unless already counted or foreign.
+  const bare = /(?<![₹\w$.,])(?<!rs\.?\s?)(?<!inr\s?)(?<!S\$\s?)(\d[\d,]*(?:\.\d+)?)\s*(k|l|lac|lakhs?|cr|crores?)\b/gi;
+  for (const m of text.matchAll(bare)) add(m[1], m[2]);
   return out;
+}
+
+/** Amounts in a currency other than INR (S$, SGD, USD, US$, $). */
+export function extractForeignAmounts(text: string): string[] {
+  const re = /(?:S\$|SGD|US\$|USD)\s*[\d,]+(?:\.\d+)?\s*(?:k|m)?\b|(?<![\w₹S])\$\s*[\d,]+(?:\.\d+)?\s*(?:k|m)?\b|[\d,]+(?:\.\d+)?\s*(?:SGD|USD)\b/gi;
+  return [...text.matchAll(re)].map((m) => m[0].trim());
 }
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
@@ -164,7 +183,7 @@ export function extractDates(text: string, today: string): string[] {
 const PARTNER_HINT = /\b(aws|amazon web services|microsoft|azure|google cloud|gcp|co-?s(?:ell|old)|mdf|deal reg|partner)\b/i;
 const ONE_TIME_LABEL = /\bone[- ]?(time|off)\b/i;
 const RECURRING_HINT = /\b(per month|\/month|\/mo|monthly|a month|retainer)\b/i;
-export const NAME_PATTERN = /^[A-Z0-9][A-Za-z0-9&.' ]*[A-Za-z0-9.] - [A-Z0-9][A-Za-z0-9&.'/() ]*$/;
+export const NAME_PATTERN = /^[A-Z0-9][A-Za-z0-9&.' ]*[A-Za-z0-9.] - [A-Z0-9][A-Za-z0-9&.'/()+ ]*$/;
 
 const isISO = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
 const near = (a: number, b: number) => Math.abs(a - b) <= Math.max(1, b * 0.005);
@@ -239,6 +258,8 @@ export function validateProposal(
   const used = [
     ...out.records.map((r) => r.amount).filter((a): a is number => a != null),
     ...(out.partner?.mdf_amount != null ? [out.partner.mdf_amount] : []),
+    // Declared exclusions (pass-through, injected figures) are accounted for, not silently dropped.
+    ...(out.excluded_amounts ?? []).map((e) => e.amount),
   ];
   for (const a of amounts) {
     if (!used.some((u) => near(u, a))) {
@@ -247,8 +268,16 @@ export function validateProposal(
   }
 
   if (PARTNER_HINT.test(rawText) && !out.partner) add("partner_missed", "Text mentions a partner but none was flagged");
-  if (ONE_TIME_LABEL.test(rawText) && RECURRING_HINT.test(rawText) && types.has("recurring") && !out.rep_label_conflict) {
-    add("label_conflict_unexplained", "Rep labelled it one-time but terms are recurring; conflict not explained");
+  if (ONE_TIME_LABEL.test(rawText) && RECURRING_HINT.test(rawText) && types.has("recurring") && (!out.rep_label_conflict || out.rep_label_conflict.startsWith("(Added by checks)"))) {
+    add("label_conflict_unexplained", "Rep labelled it one-time but terms are recurring; the AI didn't explain it (checks added the explanation)");
+  }
+
+  const foreign = extractForeignAmounts(rawText);
+  if (foreign.length && (out.excluded_amounts ?? []).some((e) => /S\$|SGD|USD|\$/i.test(e.reason))) {
+    add("foreign_excluded", "A foreign-currency amount was set aside instead of being recorded as a deal with an unknown INR amount");
+  }
+  if (foreign.length && !answers.some((a) => a.field === "amount")) {
+    add("foreign_currency", `Amount in another currency (${foreign.join(", ")}): needs an agreed INR value, never a guessed conversion`);
   }
 
   const claimsConfirmation = /confirmed by (the )?rep|rep (has |had )?confirmed/i;
@@ -269,8 +298,25 @@ export function validateProposal(
  * Every assumption must become a question. If the model assumed a date (or left
  * partner registration unknown) without asking, code adds the question.
  */
-export function ensureQuestions(out: IntegrityOutput, answers: Pick<RepAnswer, "field" | "record_index">[] = []): IntegrityOutput {
+export function ensureQuestions(
+  out: IntegrityOutput,
+  answers: Pick<RepAnswer, "field" | "record_index">[] = [],
+  rawText = "",
+): IntegrityOutput {
   const qs = [...out.ambiguities];
+  // "Submitted" / "pending" registration is not registered, whatever the model said.
+  const pendingReg = /(registration|deal reg|\breg\b)[^.;]{0,60}(pending|submitted|awaiting|not (yet )?approved)|(pending|submitted|awaiting)[^.;]{0,40}(registration|deal reg|\breg\b)/i;
+  const recurring = out.records.some((r) => r.deal_type === "recurring");
+  if (!out.rep_label_conflict && recurring && ONE_TIME_LABEL.test(rawText) && RECURRING_HINT.test(rawText)) {
+    out = {
+      ...out,
+      rep_label_conflict:
+        "(Added by checks) The rep labelled this one-time, but the terms include monthly billing, so the recurring part is booked as recurring.",
+    };
+  }
+  if (out.partner?.deal_registered === true && pendingReg.test(rawText)) {
+    out = { ...out, partner: { ...out.partner, deal_registered: null } };
+  }
   const has = (field: QuestionField, i: number | null) =>
     qs.some((q) => q.field === field && (i == null || q.record_index === i)) ||
     answers.some((a) => a.field === field && (i == null || a.record_index === i));
@@ -280,6 +326,10 @@ export function ensureQuestions(out: IntegrityOutput, answers: Pick<RepAnswer, "
       qs.push({ question: `Confirm the ${what} for ${r.name}: ${r.close_date} was assumed (${r.close_date_basis}).`, field: "close_date", record_index: i, added_by: "checks" });
     }
   });
+  const foreign = extractForeignAmounts(rawText);
+  if (foreign.length && !has("amount", null)) {
+    qs.push({ question: `The deal mentions ${foreign.join(", ")}. What is the agreed INR amount? (No currency conversion is assumed.)`, field: "amount", record_index: out.records.length === 1 ? 0 : null, added_by: "checks" });
+  }
   if (out.partner && out.partner.deal_registered == null && !has("partner_registered", null)) {
     qs.push({ question: `Has ${out.partner.name} approved the deal registration?`, field: "partner_registered", record_index: null, added_by: "checks" });
   }

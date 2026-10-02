@@ -7,7 +7,7 @@ See `HANDOFF.md` for the full design and `FAKED.md` for what is simulated.
 
 1. Create a Supabase project (free tier) and an Anthropic API key.
 2. Fill in `.env.local` (template: `.env.example`).
-3. `npm install && npm run db:setup` creates all tables (destructive: drops and recreates). Then apply migrations: `npm run db:sql supabase/002_ai_calls.sql` and `npm run db:sql supabase/003_rep_answers.sql` and `npm run db:sql supabase/004_automation.sql` (needs `SUPABASE_ACCESS_TOKEN`), or paste them into the Supabase SQL editor.
+3. `npm install && npm run db:setup` creates all tables (destructive: drops and recreates). Then apply migrations: `npm run db:sql supabase/002_ai_calls.sql` and `npm run db:sql supabase/003_rep_answers.sql` `npm run db:sql supabase/004_automation.sql` and `npm run db:sql supabase/005_rep_loop_drafts.sql` (needs `SUPABASE_ACCESS_TOKEN`), or paste them into the Supabase SQL editor.
 4. `npm run dev`, open http://localhost:3000/ingest and click **Load demo data**.
 
 ## Build status
@@ -26,4 +26,5 @@ See `HANDOFF.md` for the full design and `FAKED.md` for what is simulated.
 | + | Try cases: 6 runnable scenarios with live checklists (`/cases`) | done |
 | + | Passcode lock (`DEMO_PASSCODE`), AI-calls-left meter, display currency INR/SGD/USD | done |
 | + | Automation: auto-analyse on ingest, auto-brief on approval, leak scan → in-app notifications (`supabase/004_automation.sql`) | done |
+| + | Rep inbox (rep answers AI questions → auto re-analysis), auto-drafted follow-ups for critical leaks (`supabase/005_rep_loop_drafts.sql`) | done |
 | + | AI call cap (50, `ai_calls` ledger; run `supabase/002_ai_calls.sql`) | done |

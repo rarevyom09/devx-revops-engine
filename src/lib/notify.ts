@@ -4,7 +4,7 @@ import type { Severity } from "./leaks";
 import type { Snapshot } from "./snapshot";
 
 export type NotificationIn = {
-  kind: "ai_analysed" | "ai_failed" | "brief_drafted" | "leak";
+  kind: "ai_analysed" | "ai_failed" | "brief_drafted" | "leak" | "rep_question" | "rep_answered" | "draft_ready";
   severity?: Severity;
   title: string;
   body?: string;

@@ -7,6 +7,7 @@ export const MODULES: { href: string; label: string; engine: Engine; step: numbe
   { href: "/dashboard", label: "Dashboard", engine: "rules", step: 6, group: "Overview" },
   { href: "/cases", label: "Try cases", engine: "data", step: 8, group: "Overview" },
   { href: "/ingest", label: "Ingest", engine: "data", step: 2, group: "Workflow" },
+  { href: "/rep", label: "Rep inbox", engine: "ai", step: 3, group: "Workflow" },
   { href: "/pipeline", label: "Deal Integrity", engine: "ai", step: 3, group: "Workflow" },
   { href: "/deals", label: "Deal Pipeline", engine: "ai", step: 3, group: "Workflow" },
   { href: "/onboarding", label: "Onboarding", engine: "ai", step: 4, group: "Workflow" },

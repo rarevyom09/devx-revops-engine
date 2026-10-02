@@ -1,14 +1,20 @@
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
+import { autoDraftFollowUps } from "@/lib/automation";
 import { z } from "zod";
 import { db, errorResponse, must } from "@/lib/db";
 import { scanLeaks } from "@/lib/notify";
 import { loadSnapshot } from "@/lib/snapshot";
 
+export const maxDuration = 60;
+
 // GET ?owner=<id>: run the leak scan (dedupes), then return the latest notifications.
 export async function GET(req: NextRequest) {
   const owner = req.nextUrl.searchParams.get("owner");
   try {
-    await scanLeaks(await loadSnapshot());
+    const snap = await loadSnapshot();
+    await scanLeaks(snap);
+    // New leaks that need a message get a drafted follow-up in the background.
+    after(() => autoDraftFollowUps(snap));
     let q = db()
       .from("notifications")
       .select("id,kind,severity,title,body,href,owner_id,read_at,created_at,owner:people(name)")

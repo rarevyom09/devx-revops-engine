@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { CURRENCIES, FX, FX_AS_OF, setCurrency, useCurrency } from "@/lib/currency";
 import { MODULES, NAV_GROUPS } from "@/lib/modules";
 import { EngineBadge } from "./EngineBadge";
-import { AutomationCard, NotificationBell } from "./Notifications";
+import { NotificationBell } from "./Notifications";
 
 function Links({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
@@ -42,7 +42,7 @@ function Links({ onNavigate }: { onNavigate?: () => void }) {
 type Usage = { used: number | null; limit: number; left: number | null };
 
 // Live view of the project-wide Claude call budget (ai_calls ledger).
-function AiCredits() {
+export function AiCredits() {
   const [u, setU] = useState<Usage | null>(null);
   useEffect(() => {
     let live = true;
@@ -79,7 +79,7 @@ function AiCredits() {
   );
 }
 
-function CurrencyPicker() {
+export function CurrencyPicker() {
   const cur = useCurrency();
   return (
     <div className="rounded-lg border border-zinc-200 p-3">
@@ -106,7 +106,53 @@ function CurrencyPicker() {
   );
 }
 
-function LockButton() {
+// Hook shared by the sidebar badge and the Settings page meter.
+function useAiUsage() {
+  const [u, setU] = useState<Usage | null>(null);
+  useEffect(() => {
+    let live = true;
+    const load = () =>
+      fetch("/api/ai-usage", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => live && j && setU(j))
+        .catch(() => {});
+    load();
+    const id = setInterval(load, 20000);
+    window.addEventListener("focus", load);
+    return () => {
+      live = false;
+      clearInterval(id);
+      window.removeEventListener("focus", load);
+    };
+  }, []);
+  return u;
+}
+
+function SettingsLink({ onNavigate }: { onNavigate?: () => void }) {
+  const path = usePathname();
+  const u = useAiUsage();
+  const active = path.startsWith("/settings");
+  const low = u?.left != null && u.limit ? u.left / u.limit <= 0.1 : false;
+  return (
+    <Link
+      href="/settings"
+      onClick={onNavigate}
+      className={`flex items-center justify-between rounded-md px-3 py-1.5 text-sm ${active ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"}`}
+    >
+      ⚙︎ Settings
+      {u?.left != null && (
+        <span
+          title="AI calls left in the project budget"
+          className={`rounded px-1.5 text-[11px] tabular-nums ${active ? "bg-white/20" : low ? "bg-red-100 text-red-800" : "bg-violet-100 text-violet-800"}`}
+        >
+          {u.left} AI
+        </span>
+      )}
+    </Link>
+  );
+}
+
+export function LockButton() {
   const router = useRouter();
   return (
     <button
@@ -144,10 +190,8 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto">
           <Links />
         </nav>
-        <div className="space-y-2 pt-3">
-          <AutomationCard />
-          <CurrencyPicker />
-          <AiCredits />
+        <div className="space-y-0.5 border-t border-zinc-100 pt-3">
+          <SettingsLink />
           <LockButton />
         </div>
       </aside>
@@ -170,9 +214,7 @@ export function Sidebar() {
           <div className="mt-3" />
           <Links onNavigate={() => setOpen(false)} />
           <div className="mt-6 space-y-2">
-            <AutomationCard />
-            <CurrencyPicker />
-            <AiCredits />
+            <SettingsLink onNavigate={() => setOpen(false)} />
             <LockButton />
           </div>
         </nav>
