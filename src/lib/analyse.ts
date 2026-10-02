@@ -1,7 +1,7 @@
 import "server-only";
 import { asData, generateJSON, MODEL, type AIFailure } from "./claude";
 import { db, must } from "./db";
-import { IntegrityOutput, systemPrompt, validateProposal, type RepAnswer } from "./integrity";
+import { ensureQuestions, IntegrityOutput, systemPrompt, validateProposal, type RepAnswer } from "./integrity";
 
 export type AnalyseResult =
   | { ok: true; analysis: { id: string; confidence: string; output: IntegrityOutput; validator_flags: { flags: unknown[] } } }
@@ -28,14 +28,15 @@ export async function analyseRawDeal(rawDealId: string, answers: RepAnswer[] = [
   });
   if (!ai.ok) return { ok: false, ai };
 
-  const validation = validateProposal(raw.raw_text, ai.data, today, answers);
+  const output = ensureQuestions(ai.data, answers);
+  const validation = validateProposal(raw.raw_text, output, today, answers);
   const analysis = must(
     await db()
       .from("deal_analyses")
       .insert({
         raw_deal_id: raw.id,
         model: ai.model ?? MODEL,
-        output: ai.data,
+        output,
         confidence: validation.confidence,
         validator_flags: { ...validation, today, answers_used: answers.length },
       })

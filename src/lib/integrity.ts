@@ -40,6 +40,7 @@ export type QuestionField = (typeof QUESTION_FIELDS)[number];
 
 export const RepQuestion = z.object({
   question: z.string(),
+  added_by: z.literal("checks").optional().describe("Omit. Set by code, not the model."),
   field: z.enum(QUESTION_FIELDS).describe("The deal field the answer fills; 'other' if none fits"),
   record_index: z
     .number()
@@ -110,12 +111,14 @@ Rules you must apply:
 - Name every record "<Client> - <Scope>" in Title Case, e.g. "Acme Retail - Support Retainer". Normalise messy client names (e.g. "ACME-Retail_Site_v2" -> "Acme Retail"). No version suffixes, underscores or codes.
 - Amounts are INR. ₹8L = 800000, ₹50k = 50000, ₹1Cr = 10000000.
 - Partner involvement (co-sell, MDF, deal registration, resell) goes in "partner", not in deal amounts. MDF is partner funding, not revenue.
-- If the rep's own label contradicts the terms (e.g. marked one-time but billed monthly), follow the terms and explain in rep_label_conflict.
+- If the rep's own label contradicts the terms (e.g. marked one-time but billed monthly, even for one part of a blended deal), follow the terms and you MUST explain it in rep_label_conflict.
 
 Honesty rules (these matter more than completeness):
 - Never invent amounts, dates, terms or client names. If something is missing or vague ("TBD", "probably", "around"), leave the field null and add a question to ambiguities.
 - If you infer a date (e.g. "starting Dec" -> first of the month), say "assumed" in close_date_basis and add it to ambiguities.
 - confidence: high only if every field is stated explicitly; medium if you made a reasonable assumption; low if key facts are missing.
+- Ask about every date you assumed. Don't ask about things these rules already settle (e.g. MDF is never revenue).
+- Never say the rep confirmed anything unless <rep_answers> is present.
 - Each question must name the field its answer fills: close_date / amount / term_months / deal_type / record_name (with record_index), partner_registered / partner_mdf_amount / partner_name (record_index null), or other. Ask one thing per question.
 - If <rep_answers> is present, those are the rep's confirmed answers to earlier questions. Apply them, set close_date_basis to "confirmed by rep" where they set a date, and do not ask them again.
 
@@ -248,6 +251,11 @@ export function validateProposal(
     add("label_conflict_unexplained", "Rep labelled it one-time but terms are recurring; conflict not explained");
   }
 
+  const claimsConfirmation = /confirmed by (the )?rep|rep (has |had )?confirmed/i;
+  if (!answers.length && [out.reasoning, ...out.records.map((r) => r.close_date_basis)].some((t) => claimsConfirmation.test(t))) {
+    add("unsupported_claim", "AI says the rep confirmed something, but the rep hasn't answered any questions");
+  }
+
   const rank: Record<Confidence, number> = { low: 0, medium: 1, high: 2 };
   let cap: Confidence = "high";
   if (assumed || out.ambiguities.length > 0) cap = "medium";
@@ -255,6 +263,27 @@ export function validateProposal(
   const confidence = rank[out.confidence] <= rank[cap] ? out.confidence : cap;
 
   return { flags, model_confidence: out.confidence, confidence, needs_human: flags.length > 0 || confidence !== "high" };
+}
+
+/**
+ * Every assumption must become a question. If the model assumed a date (or left
+ * partner registration unknown) without asking, code adds the question.
+ */
+export function ensureQuestions(out: IntegrityOutput, answers: Pick<RepAnswer, "field" | "record_index">[] = []): IntegrityOutput {
+  const qs = [...out.ambiguities];
+  const has = (field: QuestionField, i: number | null) =>
+    qs.some((q) => q.field === field && (i == null || q.record_index === i)) ||
+    answers.some((a) => a.field === field && (i == null || a.record_index === i));
+  out.records.forEach((r, i) => {
+    if (r.close_date && /assum/i.test(r.close_date_basis) && !has("close_date", i)) {
+      const what = r.deal_type === "recurring" ? "first billing date" : "project end date";
+      qs.push({ question: `Confirm the ${what} for ${r.name}: ${r.close_date} was assumed (${r.close_date_basis}).`, field: "close_date", record_index: i, added_by: "checks" });
+    }
+  });
+  if (out.partner && out.partner.deal_registered == null && !has("partner_registered", null)) {
+    qs.push({ question: `Has ${out.partner.name} approved the deal registration?`, field: "partner_registered", record_index: null, added_by: "checks" });
+  }
+  return { ...out, ambiguities: qs };
 }
 
 // ---------- Approval payload (human-edited records) ----------

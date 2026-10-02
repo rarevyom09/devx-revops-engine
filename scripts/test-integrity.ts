@@ -1,6 +1,6 @@
 // Deterministic validator tests: npx tsx scripts/test-integrity.ts
 import assert from "node:assert/strict";
-import { extractAmounts, extractDates, validateProposal, type IntegrityOutput } from "../src/lib/integrity";
+import { ensureQuestions, extractAmounts, extractDates, validateProposal, type IntegrityOutput } from "../src/lib/integrity";
 import { rawDeals } from "../src/lib/demo-data";
 
 const TODAY = "2026-10-02";
@@ -81,6 +81,22 @@ v = validateProposal(text(1), {
 assert.deepEqual(codes(v), []);
 assert.equal(v.confidence, "high");
 // Without the answer the same proposal is unsupported.
-assert.deepEqual(codes(validateProposal(text(1), { ...acme, ambiguities: [], records: [acme.records[0], { ...acme.records[1], close_date_basis: "confirmed by rep" }] }, TODAY)), ["date_unsupported"]);
+assert.deepEqual(codes(validateProposal(text(1), { ...acme, ambiguities: [], records: [acme.records[0], { ...acme.records[1], close_date_basis: "confirmed by rep" }] }, TODAY)), ["date_unsupported", "unsupported_claim"]);
+
+// Assumed date with no question -> code adds one; already-asked -> no duplicate.
+// (acme's AWS registration is unknown, so a registration question is added too)
+let eq = ensureQuestions({ ...acme, ambiguities: [] });
+assert.deepEqual(eq.ambiguities.map((q) => [q.field, q.record_index, q.added_by]), [["close_date", 1, "checks"], ["partner_registered", null, "checks"]]);
+assert.deepEqual(ensureQuestions(acme).ambiguities.map((q) => q.field), ["close_date", "partner_registered"]); // date already asked: no duplicate
+// Unknown partner registration -> question; known false -> none.
+eq = ensureQuestions({ ...acme, ambiguities: [], partner: { name: "AWS", type: "co-sell", mdf_amount: null, deal_registered: null } });
+assert.ok(eq.ambiguities.some((q) => q.field === "partner_registered"));
+assert.ok(!ensureQuestions({ ...acme, partner: { ...acme.partner!, deal_registered: false } }).ambiguities.some((q) => q.field === "partner_registered"));
+// Answered date -> no question.
+assert.deepEqual(ensureQuestions({ ...acme, ambiguities: [] }, [{ field: "close_date", record_index: 1 }]).ambiguities.map((q) => q.field), ["partner_registered"]);
+
+// Reasoning that claims rep confirmation without answers is flagged.
+assert.deepEqual(codes(validateProposal(text(1), { ...acme, reasoning: "Dates confirmed by rep." }, TODAY)), ["unsupported_claim"]);
+assert.deepEqual(codes(validateProposal(text(1), { ...acme, ambiguities: [], records: [acme.records[0], { ...acme.records[1], close_date_basis: "confirmed by rep" }], reasoning: "The rep confirmed the start." }, TODAY, [{ field: "close_date", answer: "2026-12-01" }])), []);
 
 console.log("integrity validator: all tests passed");

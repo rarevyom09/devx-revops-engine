@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { AttributionPanel } from "./AttributionPanel";
 import { DiagnosePanel } from "./DiagnosePanel";
 import { ValuePanel } from "./ValuePanel";
 import { DEMO_TODAY, isISODate, type ClawbackStatus } from "@/lib/clawback";
@@ -128,6 +129,7 @@ export default function DashboardPage() {
 
       {asOf && <DiagnosePanel asOf={asOf} onChanged={() => setVersion((n) => n + 1)} />}
       {asOf && <ValuePanel asOf={asOf} version={version} />}
+      {asOf && <AttributionPanel asOf={asOf} version={version} />}
 
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">Charts</h2>
 

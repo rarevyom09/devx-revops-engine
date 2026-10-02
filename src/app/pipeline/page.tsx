@@ -648,7 +648,14 @@ function QuestionRow({ q, target, value, onChange }: { q: RepQuestion; target: s
     );
   return (
     <div className={`grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_220px] ${value.trim() ? "border-emerald-200 bg-emerald-50/40" : "border-amber-200 bg-amber-50/40"}`}>
-      <div className="text-sm text-zinc-800">{q.question}</div>
+      <div className="text-sm text-zinc-800">
+        {q.question}
+        {q.added_by === "checks" && (
+          <span className="ml-1.5 rounded bg-sky-100 px-1 py-0.5 text-[10px] font-medium uppercase text-sky-800" title="The AI assumed this without asking; code added the question.">
+            added by checks
+          </span>
+        )}
+      </div>
       <label className="block">
         <span className="text-[11px] uppercase tracking-wide text-zinc-500">→ {target}</span>
         {input}
