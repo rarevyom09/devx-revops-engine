@@ -184,6 +184,7 @@ export const ALL_TABLES = [
 
 // Children first.
 export const RESET_ORDER = [
+  "notifications",
   "payments",
   "invoices",
   "timesheets",

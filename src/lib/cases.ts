@@ -59,8 +59,8 @@ async function loadDeal(deal: Record<string, unknown>, invoices: Record<string, 
 
 const loaded: Step = { title: "Load the case", how: "Click Load. Inserts this case's data as a fresh, pending record.", check: (c) => !!(raw(c) || caseDeal(c)) };
 const analysed = (rawId: string): Step => ({
-  title: "Analyse with AI",
-  how: "Open it in Deal Integrity and click Analyse with AI (1 call).",
+  title: "AI analyses it",
+  how: "With auto-analyse on, Claude reads it as soon as it loads and a notification arrives (1 call). Otherwise open it in Deal Integrity and click Analyse with AI.",
   href: `/pipeline?raw=${rawId}`,
   check: (c) => !!analysis(c),
 });
@@ -84,7 +84,7 @@ export const CASES: CaseDef[] = [
       analysed(id(1)),
       { title: "AI catches the blend", how: "Check the violet 'Blended deal detected' banner and the two proposed records.", href: `/pipeline?raw=${id(1)}`, check: (c) => !!out(c)?.is_blended && records(c).length >= 2 },
       { title: "Answer questions and approve", how: "Answer the rep questions (e.g. the January billing date), set a practice split, name yourself as approver and approve.", href: `/pipeline?raw=${id(1)}`, check: (c) => dealsFromRaw(c).length >= 2 },
-      { title: "Approve the onboarding brief", how: "In Onboarding, pick the ordering app, Draft with AI (1 call), review milestones and approve.", href: "/onboarding", check: (c) => dealsFromRaw(c).some((d) => d.brief_status === "approved") },
+      { title: "Approve the onboarding brief", how: "Approval auto-drafts a brief per record (notification arrives). In Onboarding, review the ordering app's milestones and approve.", href: "/onboarding", check: (c) => dealsFromRaw(c).some((d) => d.brief_status === "approved") },
       { title: "See it flow downstream", how: "Open Deal Pipeline: the app record moves to Onboarded with scheduled invoices; the retainer still shows 'no billing plan'.", href: "/deals", check: (c) => dealsFromRaw(c).some((d) => d.invoices.length > 0) },
     ],
     load: () => loadRaw(id(1), P.priya,

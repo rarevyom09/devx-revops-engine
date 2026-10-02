@@ -110,14 +110,14 @@ export async function ingest(
 
   const invalid = results.filter((r) => !r.ok).length;
   if (opts.dryRun || invalid > 0) {
-    return { committed: 0, invalid, results };
+    return { committed: 0, invalid, results, ids: [] as string[] };
   }
 
   // Single statement => all-or-nothing.
-  const q =
-    table === "rates"
-      ? db().from(table).upsert(records, { onConflict: "location" })
-      : db().from(table).insert(records);
-  must(await q);
-  return { committed: records.length, invalid: 0, results };
+  if (table === "rates") {
+    must(await db().from(table).upsert(records, { onConflict: "location" }));
+    return { committed: records.length, invalid: 0, results, ids: [] as string[] };
+  }
+  const inserted = must(await db().from(table).insert(records).select("id")) as { id: string }[];
+  return { committed: records.length, invalid: 0, results, ids: inserted.map((r) => r.id) };
 }

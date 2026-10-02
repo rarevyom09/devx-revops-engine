@@ -1,4 +1,6 @@
+import { after } from "next/server";
 import { z } from "zod";
+import { autoAnalyse } from "@/lib/automation";
 import { CASES, caseStatus } from "@/lib/cases";
 import { errorResponse } from "@/lib/db";
 import { loadSnapshot } from "@/lib/snapshot";
@@ -13,6 +15,8 @@ export async function GET() {
   }
 }
 
+export const maxDuration = 60;
+
 const Body = z.object({ key: z.string() });
 
 export async function POST(req: Request) {
@@ -21,6 +25,8 @@ export async function POST(req: Request) {
   if (!def) return Response.json({ error: "unknown case" }, { status: 400 });
   try {
     await def.load();
+    // Loading a case is a deal arriving: same auto-analyse trigger as ingest.
+    if (def.rawId) after(() => autoAnalyse([def.rawId!]));
     return Response.json({ ok: true });
   } catch (e) {
     return errorResponse(e);

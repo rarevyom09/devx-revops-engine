@@ -186,7 +186,7 @@ function PasteMode({ state, onCommitted }: { state: AppState | null; onCommitted
     if (errs.length) return setErrors(errs);
     setErrors([]);
     setText("");
-    onCommitted("Deal added to the pending queue. Analyse it in Deal Integrity.");
+    onCommitted("Deal added. If auto-analyse is on, Claude is reading it now; you'll get a notification when it's ready for review.");
   }
 
   return (
@@ -227,7 +227,8 @@ function PasteMode({ state, onCommitted }: { state: AppState | null; onCommitted
       </div>
       <Errors errors={errors} />
       <p className="text-xs text-zinc-500">
-        Nothing is analysed or turned into a deal here. The text is saved verbatim as a pending raw deal.
+        Saved verbatim as a pending raw deal. With auto-analyse on, the integrity agent runs immediately; nothing becomes a
+        deal until a human approves.
       </p>
     </div>
   );

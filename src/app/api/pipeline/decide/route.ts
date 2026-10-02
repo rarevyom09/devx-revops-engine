@@ -1,4 +1,6 @@
+import { after } from "next/server";
 import { z } from "zod";
+import { autoBrief } from "@/lib/automation";
 import { db, errorResponse, must } from "@/lib/db";
 import { ApprovedRecord, PracticeSplit, RepAnswers } from "@/lib/integrity";
 
@@ -24,6 +26,8 @@ const Body = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("reject"), raw_deal_id: z.uuid() }),
 ]);
+
+export const maxDuration = 60;
 
 // Human decision. Only this route writes to `deals`.
 export async function POST(req: Request) {
@@ -78,6 +82,8 @@ export async function POST(req: Request) {
       return Response.json({ error: "A deal with that name already exists. Rename it (e.g. add a phase)." }, { status: 409 });
     }
     const created = must(res);
+    // Approval triggers the onboarding brief draft for each new record.
+    after(() => autoBrief(created.map((d) => d.id)));
     must(await db().from("raw_deals").update({ status: "approved" }).eq("id", raw.id));
     return Response.json({ ok: true, deals: created });
   } catch (e) {

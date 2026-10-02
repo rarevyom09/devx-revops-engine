@@ -39,6 +39,12 @@ const ROWS: Row[] = [
     simulated: "Thresholds invented (renewal 90 days, urgent 30 days, margin floor 30%). No email/Slack notifications; recomputed on page load.",
   },
   {
+    area: "Automation & notifications",
+    engine: "ai",
+    real: "New deals are analysed automatically on arrival; approval auto-drafts the onboarding brief; a leak scan pushes new critical/warning leaks to the deal owner's in-app notifications.",
+    simulated: "Runs in-process after the response (no queue or retries); pauses with 5 AI calls left; max 5 auto-analyses per upload. In-app only, no email/Slack; 'viewing as' is a dropdown, not a login.",
+  },
+  {
     area: "Partner (co-sell / MDF)",
     engine: "stub",
     real: "Agent detects and flags partner involvement and MDF amounts; MDF is kept out of revenue.",

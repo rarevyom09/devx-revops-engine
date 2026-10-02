@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { CURRENCIES, FX, FX_AS_OF, setCurrency, useCurrency } from "@/lib/currency";
 import { MODULES, NAV_GROUPS } from "@/lib/modules";
 import { EngineBadge } from "./EngineBadge";
+import { AutomationCard, NotificationBell } from "./Notifications";
 
 function Links({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
@@ -134,13 +135,17 @@ export function Sidebar() {
     <>
       {/* Desktop: fixed vertical sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-56 flex-col border-r border-zinc-200 bg-white px-3 py-5 md:flex">
-        <div className="mb-6 px-3">
+        <div className="mb-4 px-3">
           <Brand />
+        </div>
+        <div className="mb-4">
+          <NotificationBell />
         </div>
         <nav className="flex-1 overflow-y-auto">
           <Links />
         </nav>
         <div className="space-y-2 pt-3">
+          <AutomationCard />
           <CurrencyPicker />
           <AiCredits />
           <LockButton />
@@ -161,8 +166,11 @@ export function Sidebar() {
       </div>
       {open && (
         <nav className="fixed inset-x-0 top-[57px] bottom-0 z-30 overflow-y-auto border-t border-zinc-200 bg-white px-3 py-4 md:hidden">
+          <NotificationBell />
+          <div className="mt-3" />
           <Links onNavigate={() => setOpen(false)} />
           <div className="mt-6 space-y-2">
+            <AutomationCard />
             <CurrencyPicker />
             <AiCredits />
             <LockButton />

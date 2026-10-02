@@ -79,6 +79,13 @@ export default function PipelinePage() {
     refresh();
   }, [refresh]);
 
+  const waiting = queue?.some((q) => q.status === "pending") ?? false;
+  useEffect(() => {
+    if (!waiting) return;
+    const id = setInterval(refresh, 8000);
+    return () => clearInterval(id);
+  }, [waiting, refresh]);
+
   const item = queue?.find((q) => q.id === selected) ?? null;
 
   return (
