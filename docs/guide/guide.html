@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RevOps Platform Guide</title>
+<style>
+  :root {
+    --ink: #18181b; --muted: #52525b; --line: #e4e4e7; --soft: #f4f4f5;
+    --red: #dc2626; --violet: #6d28d9; --violet-bg: #f5f3ff; --amber: #92400e; --amber-bg: #fffbeb;
+    --green: #065f46; --green-bg: #ecfdf5; --blue: #1e40af; --blue-bg: #eff6ff;
+  }
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  html, body { background: #fff; color: var(--ink); }
+  body { font: 10.5pt/1.5 -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif; margin: 0; }
+  h1 { font-size: 22pt; line-height: 1.15; margin: 0 0 4mm; letter-spacing: -0.01em; }
+  h2 { font-size: 13.5pt; margin: 7mm 0 2mm; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 5mm 0 1.5mm; break-after: avoid; }
+  p { margin: 0 0 2.5mm; }
+  ol, ul { margin: 0 0 3mm; padding-left: 6mm; }
+  li { margin: 0.6mm 0; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9pt; background: var(--soft); padding: 0 1.2mm; border-radius: 1mm; }
+  b, strong { font-weight: 650; }
+  .chapter { break-before: page; }
+  .kicker { font-size: 9pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--red); margin-bottom: 1mm; }
+  .lead { font-size: 11.5pt; color: var(--muted); margin-bottom: 4mm; }
+
+  /* Cover */
+  .cover { height: 255mm; display: flex; flex-direction: column; }
+  .cover .brand { font-size: 10pt; color: var(--muted); }
+  .cover h1 { font-size: 30pt; margin-top: 20mm; }
+  .cover .sub { font-size: 13pt; color: var(--muted); max-width: 150mm; }
+  .access { margin-top: 12mm; border: 2.5px solid var(--red); border-radius: 4mm; padding: 6mm 7mm; }
+  .access .row { display: flex; gap: 6mm; align-items: baseline; margin: 2mm 0; }
+  .access .k { width: 30mm; font-size: 9.5pt; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .access .v { font-size: 16pt; font-weight: 700; }
+  .access .v.pass { font-family: ui-monospace, Menlo, monospace; color: var(--red); letter-spacing: .02em; }
+  .cover .who { margin-top: auto; font-size: 9.5pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 4mm; }
+
+  /* TOC */
+  .toc ol { list-style: none; padding: 0; }
+  .toc li { display: flex; align-items: baseline; gap: 2mm; margin: 1.6mm 0; }
+  .toc li.sub { padding-left: 7mm; font-size: 9.5pt; color: var(--muted); margin: 0.6mm 0; }
+  .toc li .dots { flex: 1; border-bottom: 1px dotted #a1a1aa; transform: translateY(-1mm); }
+  .toc li a { color: inherit; text-decoration: none; }
+  .toc li.ch { font-weight: 650; margin-top: 3mm; }
+
+  /* Boxes */
+  .box { border-radius: 2.5mm; padding: 3mm 4mm; margin: 3mm 0; break-inside: avoid; border: 1px solid; font-size: 10pt; }
+  .box .t { font-weight: 700; font-size: 8.5pt; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 1mm; display: block; }
+  .box p:last-child, .box ul:last-child, .box ol:last-child { margin-bottom: 0; }
+  .see { background: var(--green-bg); border-color: #a7f3d0; color: var(--green); }
+  .ai { background: var(--violet-bg); border-color: #c4b5fd; color: #4c1d95; }
+  .ai .t::before { content: "⚡ "; }
+  .write { background: var(--amber-bg); border-color: #fcd34d; color: var(--amber); }
+  .tip { background: var(--blue-bg); border-color: #bfdbfe; color: var(--blue); }
+  .note { background: var(--soft); border-color: var(--line); color: var(--muted); }
+
+  /* Figures */
+  figure { margin: 4mm 0 5mm; break-inside: avoid; page-break-inside: avoid; }
+  figure img { display: block; max-width: 100%; max-height: 190mm; margin: 0 auto; border: 1px solid var(--line); border-radius: 2mm; }
+  figure.tall img { max-height: 215mm; }
+  figure.short img { max-height: 120mm; }
+  figure.narrow img { max-width: 70%; }
+  figcaption { font-size: 9pt; color: var(--muted); margin-top: 2mm; }
+  figcaption .fn { font-weight: 700; color: var(--ink); }
+  .legend { list-style: none; padding: 0; margin: 2mm 0 0; font-size: 9.5pt; columns: 2; column-gap: 8mm; }
+  .legend.one { columns: 1; }
+  .legend li { display: flex; gap: 2mm; break-inside: avoid; margin: 0 0 1.2mm; }
+  .legend .n { flex: 0 0 5mm; height: 5mm; border-radius: 50%; background: var(--red); color: #fff; font-weight: 700; font-size: 8pt; display: flex; align-items: center; justify-content: center; margin-top: .3mm; }
+
+  /* Steps */
+  ol.steps { counter-reset: s; list-style: none; padding: 0; }
+  ol.steps > li { counter-increment: s; position: relative; padding-left: 9mm; margin: 2mm 0; }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: .2mm; width: 6mm; height: 6mm; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 700; font-size: 8.5pt; display: flex; align-items: center; justify-content: center; }
+
+  table.t { border-collapse: collapse; width: 100%; font-size: 9.2pt; margin: 2mm 0 4mm; break-inside: auto; }
+  table.t th, table.t td { border: 1px solid var(--line); padding: 1.4mm 2mm; text-align: left; vertical-align: top; }
+  table.t th { background: var(--soft); font-weight: 650; }
+  table.t tr { break-inside: avoid; }
+  pre.csv { font: 8.6pt/1.45 ui-monospace, Menlo, monospace; background: #fafafa; border: 1px solid var(--line); border-radius: 2mm; padding: 3mm; white-space: pre-wrap; word-break: break-word; break-inside: avoid; margin: 2mm 0 3mm; }
+  .pill { display: inline-block; font-size: 8pt; font-weight: 700; padding: 0 1.6mm; border-radius: 1mm; text-transform: uppercase; letter-spacing: .03em; }
+  .pill.ai { background: #ede9fe; color: #5b21b6; border: 0; }
+  .pill.rules { background: #e0f2fe; color: #075985; }
+  .pill.data { background: #d1fae5; color: #065f46; }
+  .btn { display: inline-block; font-size: 9pt; font-weight: 600; border: 1px solid #a1a1aa; border-radius: 1.2mm; padding: 0 1.6mm; background: #fff; white-space: nowrap; }
+  .btn.dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn.vio { background: #6d28d9; color: #fff; border-color: #6d28d9; }
+  .keep { break-inside: avoid; }
+  figure.side { display: grid; grid-template-columns: 60% 1fr; gap: 5mm; align-items: start; }
+  figure.side img { max-height: 228mm; }
+  figure.side .legend { columns: 1; margin-top: 0; }
+  figure.side figcaption { margin-top: 0; margin-bottom: 2mm; }
+  @media screen and (max-width: 600px) { figure.side { grid-template-columns: 1fr; } }
+  dl.gl dt { font-weight: 700; margin-top: 3mm; break-after: avoid; }
+  dl.gl dd { margin: 0.5mm 0 0 0; }
+  .qa h3 { margin-top: 4mm; }
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  @media screen {
+    body { max-width: 190mm; margin: 0 auto; padding: 10mm 16px; }
+    .chapter { border-top: 1px dashed var(--line); padding-top: 8mm; margin-top: 8mm; }
+    .cover { height: auto; min-height: 60vh; }
+  }
+  @media screen and (max-width: 600px) { .legend { columns: 1; } .twocol { grid-template-columns: 1fr; } figure.narrow img { max-width: 100%; } }
+</style>
+</head>
+<body>
+
+<!-- ============ COVER ============ -->
+<section class="cover">
+  <div class="brand">Devx Labs · Revenue Ops Engine</div>
+  <h1>Platform User Guide</h1>
+  <p class="sub">A step-by-step guide for reviewers and new ops team members. No technical background needed: follow the numbered steps and compare your screen with the screenshots.</p>
+
+  <div class="access">
+    <div class="row"><span class="k">Open</span><span class="v">https://devx-revops-engine.vercel.app</span></div>
+    <div class="row"><span class="k">Passcode</span><span class="v pass">devx-revops-2026</span></div>
+    <p style="margin:3mm 0 0;font-size:9.5pt;color:var(--muted)">Type the passcode exactly as shown (all lower case, with the hyphens). It is the same for everyone.</p>
+  </div>
+
+  <div class="box ai" style="margin-top:8mm"><span class="t">Read this first: the AI budget</span>
+    The whole platform shares a hard limit of <b>100 AI calls</b>. Any button or automatic step that asks the AI to read or write something uses 1 call. In this guide every such action is marked with a violet box like this one. Everything else (all numbers, alerts, charts and checks) is plain rules and costs nothing. The calls left are shown next to <b>⚙︎ Settings</b> at the bottom of the sidebar.
+  </div>
+  <div class="box write"><span class="t">And this: it is a shared, live database</span>
+    Everything you save is real and visible to every other reviewer. Amber boxes like this one mark actions that save or change data. If you only want to look around, you can read every page, open every panel and type into any box without saving, and nothing changes.
+  </div>
+
+  <div class="who">Screenshots were taken from the live app on 2 Oct 2026 (the demo's built-in "today") after the demo data was re-seeded. Your numbers may differ slightly if other people have used the app since. The red numbered circles and boxes on each screenshot were added for this guide; they are not part of the app.</div>
+</section>
+
+<!-- ============ TOC ============ -->
+<section class="chapter toc" id="toc">
+  <div class="kicker">Contents</div>
+  <h1>Table of contents</h1>
+  <ol>
+    <li class="ch"><a href="#c1">1. Before you start</a><span class="dots"></span><span class="pg" data-for="c1"></span></li>
+    <li class="ch"><a href="#c2">2. Unlocking, the sidebar and Settings</a><span class="dots"></span><span class="pg" data-for="c2"></span></li>
+    <li class="ch"><a href="#c3">3. Tab by tab</a><span class="dots"></span><span class="pg" data-for="c3"></span></li>
+    <li class="sub"><a href="#s3-1">3.1 Revenue Flow</a><span class="dots"></span><span class="pg" data-for="s3-1"></span></li>
+    <li class="sub"><a href="#s3-2">3.2 Dashboard</a><span class="dots"></span><span class="pg" data-for="s3-2"></span></li>
+    <li class="sub"><a href="#s3-3">3.3 Try cases</a><span class="dots"></span><span class="pg" data-for="s3-3"></span></li>
+    <li class="sub"><a href="#s3-4">3.4 Ingest</a><span class="dots"></span><span class="pg" data-for="s3-4"></span></li>
+    <li class="sub"><a href="#s3-5">3.5 Rep inbox</a><span class="dots"></span><span class="pg" data-for="s3-5"></span></li>
+    <li class="sub"><a href="#s3-6">3.6 Deal Integrity</a><span class="dots"></span><span class="pg" data-for="s3-6"></span></li>
+    <li class="sub"><a href="#s3-7">3.7 Deal Pipeline</a><span class="dots"></span><span class="pg" data-for="s3-7"></span></li>
+    <li class="sub"><a href="#s3-8">3.8 Onboarding</a><span class="dots"></span><span class="pg" data-for="s3-8"></span></li>
+    <li class="sub"><a href="#s3-9">3.9 Clawback</a><span class="dots"></span><span class="pg" data-for="s3-9"></span></li>
+    <li class="sub"><a href="#s3-10">3.10 Margin</a><span class="dots"></span><span class="pg" data-for="s3-10"></span></li>
+    <li class="sub"><a href="#s3-11">3.11 Honesty and the AI accuracy eval</a><span class="dots"></span><span class="pg" data-for="s3-11"></span></li>
+    <li class="ch"><a href="#c4">4. Ingesting data (paste, CSV, quick form)</a><span class="dots"></span><span class="pg" data-for="c4"></span></li>
+    <li class="ch"><a href="#c5">5. Rep inbox: answering the AI's questions</a><span class="dots"></span><span class="pg" data-for="c5"></span></li>
+    <li class="ch"><a href="#c6">6. Reviewing a deal in Deal Integrity</a><span class="dots"></span><span class="pg" data-for="c6"></span></li>
+    <li class="ch"><a href="#c7">7. Onboarding: brief, milestones, invoices</a><span class="dots"></span><span class="pg" data-for="c7"></span></li>
+    <li class="ch"><a href="#c8">8. Running the Try cases</a><span class="dots"></span><span class="pg" data-for="c8"></span></li>
+    <li class="ch"><a href="#c9">9. Checking the Manual Loop</a><span class="dots"></span><span class="pg" data-for="c9"></span></li>
+    <li class="ch"><a href="#c10">10. Monitoring day to day</a><span class="dots"></span><span class="pg" data-for="c10"></span></li>
+    <li class="ch"><a href="#c11">11. End-to-end walkthrough</a><span class="dots"></span><span class="pg" data-for="c11"></span></li>
+    <li class="ch"><a href="#c12">12. Troubleshooting and FAQ</a><span class="dots"></span><span class="pg" data-for="c12"></span></li>
+    <li class="ch"><a href="#c13">13. Glossary</a><span class="dots"></span><span class="pg" data-for="c13"></span></li>
+  </ol>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="chapter" id="c1">
+  <div class="kicker">Chapter 1</div>
+  <h1>Before you start</h1>
+
+  <h2>What the platform does, in one paragraph</h2>
+  <p>A sales rep closes a deal and describes it in plain words, often messily ("₹18L build, then ₹75k a month support, Google Cloud co-sell"). That one sentence has to become a clean <b>deal record</b>, then a <b>booking</b>, then <b>invoices</b>, then <b>cash</b> collected, and finally a <b>margin</b> once delivery hours are logged. Today that chain is stitched together by hand in a CRM, spreadsheets and Slack, and money leaks at every hand-off. This platform lets the AI do the manual reading and drafting (splitting the deal, asking the rep what is unclear, drafting the delivery brief, billing milestones and follow-up emails), lets plain rules check every rupee and date, and keeps <b>humans as the only ones who approve anything involving money</b>.</p>
+
+  <div class="box note"><span class="t">The five stages you will see everywhere</span>
+    <b>Deal</b> (the rep's text, checked) → <b>Booking</b> (approved deal records) → <b>Invoice</b> (billing milestones raised) → <b>Realization</b> (cash collected before the deadline, or variable pay is clawed back) → <b>Margin</b> (price minus delivery cost).
+  </div>
+
+  <h2>Who does what</h2>
+  <table class="t">
+    <tr><th style="width:22%">Person</th><th>Where they work</th></tr>
+    <tr><td><b>Sales rep</b></td><td>Submits deals (Ingest) and answers the AI's questions in the <b>Rep inbox</b>.</td></tr>
+    <tr><td><b>Ops lead</b></td><td>Approves deals in <b>Deal Integrity</b>, approves briefs in <b>Onboarding</b>, works the leaks on <b>Revenue Flow</b> and the <b>Dashboard</b>.</td></tr>
+    <tr><td><b>Finance / delivery</b></td><td>Record payments and hours (Ingest, or directly from Diagnose); watch <b>Clawback</b> and <b>Margin</b>.</td></tr>
+  </table>
+  <p>There are no personal logins in this demo: one shared passcode, and dropdowns ("I am", "Viewing as") to choose who you are acting as.</p>
+
+  <h2>What you need</h2>
+  <ul>
+    <li>A computer with a modern browser (Chrome, Edge, Safari or Firefox). A phone works too but the screens are busier.</li>
+    <li>The address <b>https://devx-revops-engine.vercel.app</b> and the passcode <b class="mono">devx-revops-2026</b>.</li>
+    <li>About 30 to 45 minutes to read this guide and click through the tabs.</li>
+  </ul>
+
+  <h2>The AI budget, and why some buttons say "uses 1 AI call"</h2>
+  <p>The platform uses Anthropic's Claude (Haiku 4.5) for three jobs: reading a raw deal description, drafting an onboarding brief, and drafting a follow-up or "next step" message. Each run is one <b>AI call</b>. To keep costs fixed there is a hard cap of <b>100 calls for the whole project</b>, shared by everyone. At the time of the screenshots 57 had been used and <b>43 were left</b>. Automatic AI steps stop on their own when only the <b>AI reserve</b> (default 5 calls) is left, so the manual buttons always keep some budget.</p>
+  <table class="t">
+    <tr><th>Uses 1 AI call each</th><th>Never uses AI</th></tr>
+    <tr><td>
+      Analyse with AI / Re-analyse / Re-analyse with answers (Deal Integrity)<br>
+      Draft with AI / Re-draft with AI (Onboarding)<br>
+      Suggest next step (Deal Pipeline drawer)<br>
+      Analyse, Draft brief, Draft next step / Redraft (Dashboard → Diagnose)<br>
+      <b>Automatic</b> (when switched on in Settings): analysing a pasted/uploaded deal or a loaded AI Try case (1 per deal); re-analysing after a rep sends answers (1); drafting briefs after approval (1 per record); drafting a follow-up for a new critical leak (1 per leak, max 3 per scan)
+    </td><td>
+      Every number, chart, alert, deadline and margin<br>
+      Load demo data, Reset<br>
+      CSV preview, Quick form, Record payment, Log hours, Mark registered, Set practice split<br>
+      Copy message, Mark sent, Dismiss on a follow-up draft<br>
+      Clawback time-travel, Margin what-if, currency switch<br>
+      Write manually (Onboarding), See Manual Loop walkthrough
+    </td></tr>
+  </table>
+  <p>When the AI is unavailable (budget used up, or any error) nothing breaks: the screen says <b>"AI unavailable: manual entry"</b>, nothing is guessed, and you fill in the same form by hand. The same checks still apply.</p>
+
+  <h2>Reset vs Load demo data</h2>
+  <table class="t">
+    <tr><th style="width:28%">Button (Ingest tab)</th><th>What it does</th><th style="width:22%">Uses AI?</th></tr>
+    <tr><td><span class="btn dark">Load demo data</span></td><td>Restores the invented demo data: 11 people, 12 approved deals across India and Singapore, 10 approved briefs, ~80 invoices, payments, timesheets, and a set of raw deals waiting for review. Safe to click again: it never creates duplicates.</td><td>No, never.</td></tr>
+    <tr><td><span class="btn" style="color:#b91c1c;border-color:#fecaca">Reset</span></td><td>Deletes <b>all rows in every table</b> for everyone, after a confirmation box. Only use it if you are sure, and then click Load demo data.</td><td>No.</td></tr>
+  </table>
+  <div class="box write"><span class="t">Careful</span>Reset wipes the shared database, including any deals other reviewers have approved. In a shared review, prefer Try cases (Chapter 8), which use their own clients and never touch the demo data.</div>
+
+  <h2>How to read this guide</h2>
+  <ul>
+    <li><b>Numbered steps</b> tell you exactly what to click. Button names are shown like <span class="btn">this</span>.</li>
+    <li><b>Red numbered circles</b> on screenshots match the numbered list under each picture.</li>
+    <li><span class="pill" style="background:#ecfdf5;color:#065f46">Green boxes</span> say what you should see if it worked. <span class="pill ai">Violet boxes</span> warn that an action uses an AI call. <span class="pill" style="background:#fffbeb;color:#92400e">Amber boxes</span> warn that an action saves data.</li>
+    <li>The demo's "today" is fixed at <b>2 October 2026</b>, so dates and deadlines are reproducible.</li>
+  </ul>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="chapter" id="c2">
+  <div class="kicker">Chapter 2</div>
+  <h1>Unlocking, the sidebar and Settings</h1>
+
+  <h2>Unlock the app</h2>
+  <ol class="steps">
+    <li>Open <b>https://devx-revops-engine.vercel.app</b>. You land on a small box titled "Enter the demo passcode".</li>
+    <li>Click into the <b>Passcode</b> field and type <b class="mono">devx-revops-2026</b> (the dots hide what you type).</li>
+    <li>Click <span class="btn dark">Unlock</span>.</li>
+  </ol>
+  <figure class="short narrow">
+    <img src="img/01-unlock.jpg" alt="Unlock screen">
+    <figcaption><span class="fn">Figure 2.1</span> The unlock screen.</figcaption>
+    <ol class="legend one"><li><span class="n">1</span>Passcode field: type devx-revops-2026.</li><li><span class="n">2</span>Unlock: takes you to the Revenue Flow home page.</li></ol>
+  </figure>
+  <div class="box see"><span class="t">What you should see</span>The Revenue Flow page with a sidebar on the left. If you see "That passcode didn't work.", retype it carefully (no spaces). You stay unlocked in this browser until you click Lock app.</div>
+
+  <h2>The sidebar, piece by piece</h2>
+  <div class="twocol">
+    <figure class="tall" style="margin-top:0">
+      <img src="img/03-sidebar.jpg" alt="Sidebar" style="max-height:200mm">
+      <figcaption><span class="fn">Figure 2.2</span> The sidebar on a laptop.</figcaption>
+    </figure>
+    <div>
+      <ol class="legend one" style="font-size:9.8pt">
+        <li><span class="n">1</span><span><b>🔔 Notifications.</b> The red number is unread items. Opens a side panel with AI results, rep questions and answers, follow-up drafts and new leaks. See Chapter 10.</span></li>
+        <li><span class="n">2</span><span><b>Overview</b>: Revenue Flow (home), Dashboard (diagnose leaks, value, charts), Try cases (six guided scenarios).</span></li>
+        <li><span class="n">3</span><span><b>Workflow</b>: Ingest (get data in), <b>Rep inbox</b> (reps answer the AI's questions), Deal Integrity (ops checks and approves deals), Deal Pipeline (board of every deal), Onboarding (briefs and invoices). The violet <span class="pill ai">AI-native</span> badge means the AI does the first draft on that tab.</span></li>
+        <li><span class="n">4</span><span><b>Monitor</b>: Clawback (payment deadlines and variable pay at risk), Margin (price vs delivery cost).</span></li>
+        <li><span class="n">5</span><span><b>About</b>: Honesty (what is real, what is simulated, and how accurate the AI is).</span></li>
+        <li><span class="n">6</span><span><b>⚙︎ Settings</b>, with a badge showing the <b>AI calls left</b> (here "43 AI"). The badge turns red when 10% or less is left. Automation switches, the AI budget meter and display currency live on this page.</span></li>
+        <li><span class="n">7</span><span><b>Lock app.</b> Signs this browser out; you need the passcode again.</span></li>
+      </ol>
+    </div>
+  </div>
+
+  <h2 id="settings">The Settings page</h2>
+  <p>Click <b>⚙︎ Settings</b> at the bottom of the sidebar.</p>
+  <figure>
+    <img src="img/40-settings.jpg" alt="Settings">
+    <figcaption><span class="fn">Figure 2.3</span> Settings. Changes to automation apply to everyone using the demo.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>Automation</b>, three switches (violet = on): <b>Analyse new deals</b> (1 AI call per pasted or uploaded deal, max 5 per upload), <b>Draft brief on approval</b> (1 call per approved record), <b>Draft follow-ups for leaks</b>.</span></li>
+      <li><span class="n">2</span><span><b>Draft follow-ups for leaks</b>: when a clawback risk, margin breach or renewal appears, a payment chase, change request or renewal note is drafted once and the owner is notified. Nothing is sent. Max 3 per scan.</span></li>
+      <li><span class="n">3</span><span><b>AI reserve</b> (0, 5, 10 or 20 calls; default 5). Automation pauses when this many calls are left, so manual actions always have budget.</span></li>
+      <li><span class="n">4</span><span><b>AI budget</b>: calls left out of 100. The bar turns amber at 30% and red at 10%.</span></li>
+      <li><span class="n">5</span><span><b>Display currency</b>: INR, SGD or USD. Display only, in your browser only (see Chapter 10).</span></li>
+      <li><span class="n">6</span><span><b>Access</b>: Lock app (same as in the sidebar).</span></li>
+      <li><span class="n">7</span><span>The Settings link in the sidebar with its "AI calls left" badge.</span></li>
+    </ol>
+  </figure>
+  <div class="box write"><span class="t">Careful: switches affect everyone</span>The automation switches and the AI reserve are shared settings. Leave them as they are unless you own the demo. With a switch off, the matching AI step simply waits for someone to click the manual button.</div>
+
+  <h2>On a phone</h2>
+  <p>On a narrow screen the sidebar folds into a <span class="btn">Menu</span> button at the top right. Tap it to see the same items, including Settings and Lock app at the bottom; tap <span class="btn">Close</span> or any tab to hide it.</p>
+  <div class="twocol">
+    <figure class="short"><img src="img/06-mobile-home.jpg" alt="Mobile home" style="max-height:120mm"><figcaption><span class="fn">Figure 2.4</span> Phone view. <b>1</b>: Menu button.</figcaption></figure>
+    <figure class="short"><img src="img/07-mobile-menu.jpg" alt="Mobile menu" style="max-height:120mm"><figcaption><span class="fn">Figure 2.5</span> Menu open. <b>1</b>: Notifications. <b>2</b>: tap a tab (here Rep inbox) to go there.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="chapter" id="c3">
+  <div class="kicker">Chapter 3</div>
+  <h1>Tab by tab</h1>
+  <p class="lead">What each tab is for, what is on the screen, and what you can do there. Detailed task instructions follow in Chapters 4 to 11.</p>
+
+  <h2 id="s3-1">3.1 Revenue Flow (home) <span class="pill rules">Rules-based</span></h2>
+  <p><b>For:</b> a one-glance health check of the whole money chain. <b>Uses AI:</b> no.</p>
+  <figure>
+    <img src="img/04-home.jpg" alt="Revenue Flow">
+    <figcaption><span class="fn">Figure 3.1</span> Revenue Flow, the home page.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>Five stage cards</b>: Deal → Booking → Invoice → Realization → Margin. Each shows a headline number and coloured chips (critical, warning, info, or "✓ no leaks"). <b>Click a card</b> to filter the inbox to that stage; click again to clear.</span></li>
+      <li><span class="n">2</span><span><b>Exceptions inbox</b> with filter pills: All, Critical, Warning, Info.</span></li>
+      <li><span class="n">3</span><span><b>One alert</b>: what is wrong, which deal, the numbers behind it, the ₹ at stake, and a button that takes you to the tab where you fix it.</span></li>
+    </ol>
+  </figure>
+  <p>The sentence above the cards ("As of 2026-10-02 · 2 critical (₹85,000 at stake) · 16 other alerts") is the summary. The leak furthest left matters most: a bad deal record corrupts every stage after it.</p>
+
+  <h2 id="s3-2">3.2 Dashboard <span class="pill rules">Rules-based</span></h2>
+  <p><b>For:</b> diagnosing where money leaks, fixing it in place, and seeing the value the tool delivers. Top to bottom: controls, <b>Diagnose</b>, <b>Value</b>, <b>Attribution</b>, then <b>Charts</b>.</p>
+  <figure>
+    <img src="img/08-dashboard-top.jpg" alt="Dashboard top">
+    <figcaption><span class="fn">Figure 3.2</span> Dashboard controls and the Diagnose panel (collapsed).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>As of</b> date: the "time machine". Pick any date to replay deadlines as they would look then.</span></li>
+      <li><span class="n">2</span><span><b>Presets</b>: Today, 15 Nov, 15 Dec, 1 Jan 2027.</span></li>
+      <li><span class="n">3</span><span><b>Filters</b>: Owner, Entity (India/Singapore), Deal type, Practice. These slice the charts.</span></li>
+      <li><span class="n">4</span><span><b>Target margin</b> slider (30 to 70%, default 40%).</span></li>
+      <li><span class="n">5</span><span><b>Reset filters</b>: back to defaults.</span></li>
+      <li><span class="n">6</span><span><b>Diagnose totals</b>: ₹ at stake now, number of critical and warning leaks.</span></li>
+      <li><span class="n">7</span><span><b>A leak group</b>, ranked by ₹ at stake. Click it to expand next steps, any follow-up already drafted by the AI, and action buttons (Chapter 10).</span></li>
+    </ol>
+  </figure>
+
+  <h3>Value panel: "Pain points → value, measured live"</h3>
+  <figure>
+    <img src="img/12-value.jpg" alt="Value panel">
+    <figcaption><span class="fn">Figure 3.3</span> The Value panel.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>Headline tiles</b>: deals corrected at entry, deal close → delivery brief time, ARR kept out of one-time, clawback surprises, manual hours saved (estimate) and AI cost so far.</span></li>
+      <li><span class="n">2</span><span><b>Live evidence</b> column: counts taken from the current data for each pain point.</span></li>
+      <li><span class="n">3</span><span>"✓ under control" or "⚠ needs action (see Diagnose)" for each row.</span></li>
+      <li><span class="n">4</span><span>How "hours saved" is estimated (stated minutes per task). It is an estimate, not a measurement.</span></li>
+    </ol>
+  </figure>
+
+  <h3>Attribution panel: the "double bubble"</h3>
+  <figure class="short">
+    <img src="img/13-attribution.jpg" alt="Attribution panel">
+    <figcaption><span class="fn">Figure 3.4</span> Who gets credit for invoiced revenue.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>The sum: every invoiced rupee credits the consulting owner 100% <i>and</i> the practice teams by their split, so total credit is about twice the invoiced amount, by design. Practice credit without a split is shown as unattributed.</span></li>
+      <li><span class="n">2</span><span><b>Bubble 1</b>: consulting owners, with collected cash, variable pay at stake and clawback (realised / at risk).</span></li>
+      <li><span class="n">3</span><span><b>Bubble 2</b>: practice teams (AI, Web, Cloud, Data) by their share.</span></li>
+    </ol>
+  </figure>
+
+  <h3>Charts</h3>
+  <figure>
+    <img src="img/14-charts.jpg" alt="Charts part 1">
+    <figcaption><span class="fn">Figure 3.5</span> Headline tiles and the first four charts. Hover any bar or dot for exact figures; "Table view" under each chart shows the numbers as a table.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Six tiles: contracted, invoiced, collected, realised clawback, projected exposure, critical alerts.</span></li>
+      <li><span class="n">2</span><span>Revenue flow: contracted → invoiced → collected.</span></li>
+      <li><span class="n">3</span><span>One-time vs recurring, plus recurring ARR (monthly × 12).</span></li>
+      <li><span class="n">4</span><span>Invoiced vs collected by quarter.</span></li>
+      <li><span class="n">5</span><span>Clawback by owner: realised vs projected.</span></li>
+    </ol>
+  </figure>
+  <figure>
+    <img src="img/14b-charts.jpg" alt="Charts part 2">
+    <figcaption><span class="fn">Figure 3.6</span> Lower charts. <b>1</b>: Margin by deal against the 30% floor and the target line. <b>2</b>: Delivery hours, India vs Singapore. <b>3</b>: Alerts by stage. Between these and the charts above sits a long "Realization deadlines" chart: every raised invoice as a dot by days left to its deadline, with the 60-day at-risk window shaded yellow.</figcaption>
+  </figure>
+
+  <h2 id="s3-3">3.3 Try cases <span class="pill data">Data</span></h2>
+  <p><b>For:</b> six ready-made scenarios that prove the platform works, each with a checklist that ticks itself from live data. Each case uses its own invented clients so it never touches the demo data. Full instructions in Chapter 8.</p>
+  <figure>
+    <img src="img/19-cases-overview.jpg" alt="Try cases">
+    <figcaption><span class="fn">Figure 3.7</span> The Try cases page after the data reset: every case shows 0/N and a <b>Load case</b> button. <b>1</b>: Case 1 (blended deal). <b>2</b>: Case 2 (mislabelled type).</figcaption>
+  </figure>
+
+  <h2 id="s3-4">3.4 Ingest <span class="pill data">Data</span></h2>
+  <p><b>For:</b> getting data in without touching a database. Three modes: <b>Paste deal text</b>, <b>CSV upload</b>, <b>Quick form</b>. The right-hand side has <b>Demo data</b> (Load demo data, Reset) and <b>Row counts</b> for every table. Pasted deals land as <b>pending</b>; only human approval in Deal Integrity turns them into real deals. Full instructions in Chapter 4 (Figure 4.1 shows this page).</p>
+
+  <h2 id="s3-5">3.5 Rep inbox <span class="pill ai">AI-native</span></h2>
+  <p><b>For:</b> sales reps. After the AI reads a rep's deal, the rep sees a plain-language read-back of what the AI understood and answers only the questions it could not work out. Their answers go straight into the deal, the AI re-checks it, and ops is notified. Pick your name in <b>I am</b> to see your deals in three groups: <b>Needs your answers</b>, <b>Waiting for ops approval</b> and <b>Approved</b>. Full instructions in Chapter 5 (Figures 5.1 to 5.3).</p>
+
+  <h2 id="s3-6">3.6 Deal Integrity <span class="pill ai">AI-native</span></h2>
+  <p><b>For:</b> the ops lead, turning each raw deal description into clean records and approving them. The AI proposes, code checks every amount and date, the rep answers questions, a human approves.</p>
+  <figure>
+    <img src="img/27-integrity-pending.jpg" alt="Deal Integrity pending">
+    <figcaption><span class="fn">Figure 3.8</span> Deal Integrity with a pending (not yet analysed) deal selected.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>Queue</b>: every raw deal, open ones first. Click one to open it on the right.</span></li>
+      <li><span class="n">2</span><span><b>Status badge</b>: PENDING (not analysed), ANALYSED (waiting for ops), APPROVED, REJECTED. Analysed items also show a confidence badge.</span></li>
+      <li><span class="n">3</span><span><b>Raw deal text</b>, stored exactly as typed. It is treated as data, never as instructions.</span></li>
+      <li><span class="n">4</span><span><span class="btn vio">Analyse with AI</span>: asks the AI to propose records. <b>Uses 1 AI call.</b></span></li>
+      <li><span class="n">5</span><span><span class="btn">Reject</span>: closes the deal without creating records (saves).</span></li>
+    </ol>
+  </figure>
+  <div class="box ai"><span class="t">Careful: this uses an AI call</span>Analyse with AI, Re-analyse and Re-analyse with answers each use 1 of the 100 shared calls. With "Analyse new deals" switched on, newly added deals are analysed automatically, so you rarely need these buttons. (The pending deals in the screenshot came from the demo seed, which deliberately never runs AI.)</div>
+  <p>The full review screen (AI analysis, questions, editable records, partner, practice split, approval) is explained in Chapter 6.</p>
+
+  <h2 id="s3-7">3.7 Deal Pipeline <span class="pill ai">AI-native</span></h2>
+  <p><b>For:</b> a board showing every deal at its current stage, from raw text to cash collected. Stages are worked out from the data automatically (there is no drag and drop).</p>
+  <figure>
+    <img src="img/33-pipeline-board.jpg" alt="Deal Pipeline board">
+    <figcaption><span class="fn">Figure 3.9</span> The Deal Pipeline board (scroll sideways on a smaller screen).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>Intake</b>: raw text, not yet analysed.</span></li>
+      <li><span class="n">2</span><span><b>Needs review</b>: AI proposal waiting for human approval.</span></li>
+      <li><span class="n">3</span><span><b>Booked</b>: approved, but no billing plan yet.</span></li>
+      <li><span class="n">4</span><span><b>Onboarded</b>: billing plan set, nothing invoiced yet.</span></li>
+      <li><span class="n">5</span><span><b>Invoicing</b>: invoiced, cash still outstanding.</span></li>
+      <li><span class="n">6</span><span><b>Collected / Live</b>: everything raised so far is paid.</span></li>
+      <li><span class="n">7</span><span>Kaveri Agritech phase 2 in Needs review: HIGH CONFIDENCE, 1 warning, Next: "Approve the proposed split".</span></li>
+      <li><span class="n">8</span><span><b>A deal card</b>: owner, type, value, close date, partner and alert chips, and the "Next:" action. Click it to open the detail drawer.</span></li>
+    </ol>
+  </figure>
+  <figure class="side">
+    <img src="img/34-pipeline-drawer.jpg" alt="Deal detail drawer">
+    <div>
+    <figcaption><span class="fn">Figure 3.10</span> The detail drawer for Wayne Enterprises - Analytics Dashboard. Close it with ✕, the Esc key, or by clicking the dimmed board.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>Next action</b>, with a link to the right tab.</span></li>
+      <li><span class="n">2</span><span><span class="btn vio">Suggest next step</span>: AI drafts a next step and an email (nothing is sent or saved). <b>Uses 1 AI call.</b></span></li>
+      <li><span class="n">3</span><span><b>Integrity</b>: raw text, confidence, checks, questions and answers, approver (seeded deals say "Entered directly").</span></li>
+      <li><span class="n">4</span><span><b>Booking</b>: type, amount, close date, practice split, partner.</span></li>
+      <li><span class="n">5</span><span><b>Onboarding</b>: the approved billing milestones (or "No brief on file").</span></li>
+      <li><span class="n">6</span><span><b>Invoices &amp; cash</b>: each invoice with status (scheduled, open, partial, at risk, clawback, paid).</span></li>
+      <li><span class="n">7</span><span><b>Margin</b>: hours, cost, price and margin %.</span></li>
+    </ol>
+    </div>
+  </figure>
+
+  <h2 id="s3-8">3.8 Onboarding <span class="pill ai">AI-native</span></h2>
+  <p><b>For:</b> turning an approved deal into a delivery brief (scope, deliverables, success criteria, risks, open questions) and <b>billing milestones</b>. Approving a brief creates the scheduled invoices. Left: list of approved deals with a status pill (no brief, draft, approved). Right: the selected deal. Full instructions in Chapter 7.</p>
+
+  <h2 id="s3-9">3.9 Clawback <span class="pill rules">Rules-based</span></h2>
+  <p><b>For:</b> making sure each invoice is paid in time. The rule: every invoice must be paid by the end of the quarter after it was raised, or the owner's variable pay on it (an invented 5% of the invoice) is clawed back in proportion to the unpaid share.</p>
+  <figure>
+    <img src="img/37-clawback-today.jpg" alt="Clawback">
+    <figcaption><span class="fn">Figure 3.11</span> Clawback as of today (2 Oct 2026), top of the page. The invoice table continues below (one row per raised invoice), followed by the per-owner roll-up (Figure 3.12).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>As-of date</b>: change it to time-travel. Payments after the chosen date are ignored.</span></li>
+      <li><span class="n">2</span><span><b>Presets</b>: Today (demo), Fast-forward to 15 Nov, After Q4 deadline.</span></li>
+      <li><span class="n">3</span><span><b>Totals</b>: variable pay at stake, realised clawback, projected exposure (if nothing more is paid).</span></li>
+    </ol>
+  </figure>
+  <figure class="short">
+    <img src="img/38c-clawback-header.jpg" alt="Clawback header" style="border-bottom:0;border-radius:2mm 2mm 0 0">
+    <img src="img/37c-clawback-wayne.jpg" alt="Clawback Wayne row" style="border-top:0;border-radius:0 0 2mm 2mm">
+    <figcaption><span class="fn">Figure 3.12</span> Column headings, and part of the invoice table. <b>1</b>: Wayne Enterprises UAT 40%: ₹4,00,000 invoice, ₹1,50,000 paid (37.5%), status <b>Partial</b>, exposure ₹12,500 = ₹20,000 × (1 − 1,50,000 ÷ 4,00,000).</figcaption>
+  </figure>
+  <figure class="short">
+    <img src="img/37b-clawback-rollup.jpg" alt="Per-owner roll-up">
+    <figcaption><span class="fn">Figure 3.13</span> <b>1</b>: Per-owner roll-up: what each consulting owner stands to lose. Daniel Tan has ₹20,000 already clawed back (Hooli SG).</figcaption>
+  </figure>
+
+  <h2 id="s3-10">3.10 Margin <span class="pill rules">Rules-based</span></h2>
+  <p><b>For:</b> comparing each deal's quoted price with its delivery cost from logged India (offshore, ₹2,000/h) and Singapore (onsite, ₹6,500/h) hours.</p>
+  <figure>
+    <img src="img/39-margin-whatif.jpg" alt="Margin">
+    <figcaption><span class="fn">Figure 3.14</span> Margin with a what-if of +20 Singapore hours typed on the Wayne row (not saved).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>The formula, in plain sight. Rates and assumptions underneath.</span></li>
+      <li><span class="n">2</span><span><b>Target margin (plan)</b>, default 40%. The warning line is fixed at 30%.</span></li>
+      <li><span class="n">3</span><span><b>Margin %</b>: 10.5%, with "was 23.5%" while a what-if is active.</span></li>
+      <li><span class="n">4</span><span><b>Status</b>: On target, Below target, Below 30%, or No hours logged.</span></li>
+      <li><span class="n">5</span><span><b>What-if: extra hours</b> boxes (+IN, +SG). Type a number to simulate scope creep.</span></li>
+      <li><span class="n">6</span><span>"Simulation active: what-if hours are not saved". <span class="btn">Clear what-ifs</span> resets them.</span></li>
+    </ol>
+  </figure>
+
+  <h2 id="s3-11">3.11 Honesty and the AI accuracy eval <span class="pill data">Data</span></h2>
+  <p><b>For:</b> knowing what is real, what is simulated, which assumptions still need confirming, and how accurate the deal-reading AI has measured. Read it before relying on any number.</p>
+  <figure>
+    <img src="img/30-honesty.jpg" alt="Honesty">
+    <figcaption><span class="fn">Figure 3.15</span> Top of the Honesty page. <b>1</b>: whether the AI is live on this deployment and how many of the 100 calls have been used. <b>2</b>: for each area, what is <b>real</b> and what is <b>simulated or stubbed</b>. Below the table: open assumptions to confirm.</figcaption>
+  </figure>
+  <h3>AI accuracy (eval)</h3>
+  <p>The Deal Integrity AI was run, through the same production pipeline (AI proposal, then code checks), on deal texts whose correct answers were written down in advance. The number that matters for money is the <b>silent error rate</b>: wrong proposals that look clean, so a human could approve them without being warned.</p>
+  <figure>
+    <img src="img/44-honesty-eval.jpg" alt="AI accuracy eval">
+    <figcaption><span class="fn">Figure 3.16</span> The "AI accuracy (eval)" section.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>What was measured and why. Headline numbers come from a <b>held-out</b> set: 6 new cases written after the fixes and never used to tune them.</span></li>
+      <li><span class="n">2</span><span><b>Silent error rate (held-out): 0%</b>, 0 of 6 cases wrong with no flag.</span></li>
+      <li><span class="n">3</span><span><b>Cases fully correct: 5/6</b> (every field right). Field accuracy 88.9% (48 of 54 field checks).</span></li>
+      <li><span class="n">4</span><span><b>Errors caught by checks: 1/1</b>: the one wrong case was flagged, given low confidence or turned into a question.</span></li>
+      <li><span class="n">5</span><span>The held-out row in the comparison table. The first version (v1, 18 cases) had 1 silent error (5.6%); after the fixes the same outputs re-checked had 0.</span></li>
+      <li><span class="n">6</span><span><b>Still wrong after the fixes</b>: the one held-out miss (a USD amount, correctly refused rather than converted, and caught).</span></li>
+      <li><span class="n">7</span><span><b>Caveats</b>: small invented sets (18 + 6 cases), labels written by the builder, one run per case. One case moves a held-out rate by about 17 points. Not a substitute for testing on real CRM data.</span></li>
+    </ol>
+  </figure>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="chapter" id="c4">
+  <div class="kicker">Chapter 4</div>
+  <h1>Ingesting data</h1>
+  <p class="lead">Three ways in: paste a deal as text, upload a CSV file, or type one row in a quick form. Plus the demo data buttons.</p>
+
+  <h2>4a. Paste deal text</h2>
+  <ol class="steps">
+    <li>Click <b>Ingest</b> in the sidebar. The <b>Paste deal text</b> tab is open by default.</li>
+    <li>Paste or type the deal exactly as the rep wrote it into <b>Deal text</b>. Messy is fine.</li>
+    <li>Choose the <b>Consulting owner</b> from the dropdown (for example "Daniel Tan (SG)"). The AI's questions go to this person's Rep inbox; if you leave it unassigned, only ops sees them.</li>
+    <li>Click <span class="btn dark">Add to pending queue</span>.</li>
+  </ol>
+  <figure>
+    <img src="img/23-ingest-paste.jpg" alt="Paste deal text">
+    <figcaption><span class="fn">Figure 4.1</span> Ingest, Paste deal text, with the sample Zephyr deal typed in (not submitted).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>The <b>Paste deal text</b> tab (next to CSV upload and Quick form).</span></li>
+      <li><span class="n">2</span><span>Paste the deal text here.</span></li>
+      <li><span class="n">3</span><span>Pick the consulting owner (the rep).</span></li>
+      <li><span class="n">4</span><span><b>Add to pending queue</b>: saves the text and starts auto-analysis (1 AI call).</span></li>
+      <li><span class="n">5</span><span><b>Demo data</b>: Load demo data and Reset (see Chapter 1).</span></li>
+      <li><span class="n">6</span><span><b>Row counts</b> for every table, to confirm something landed.</span></li>
+    </ol>
+  </figure>
+  <div class="box ai"><span class="t">Careful: this uses an AI call</span>With "Analyse new deals" on, Add to pending queue triggers the AI straight away (1 call). Up to 5 deals per upload are analysed automatically; the rest wait for a manual Analyse.</div>
+  <div class="box see"><span class="t">What you should see</span>A grey message: "Deal added. If auto-analyse is on, Claude is reading it now; you'll get a notification when it's ready for review." Within about 15 to 30 seconds the 🔔 count goes up with "&lt;Client&gt; analysed: …". If the AI has questions, the rep also gets "Question for rep" and the deal appears in their Rep inbox under <b>Needs your answers</b>. Ops sees it in Deal Integrity as ANALYSED and on the Deal Pipeline board under Needs review.</div>
+
+  <h2>4b. CSV upload</h2>
+  <ol class="steps">
+    <li>On Ingest, click the <b>CSV upload</b> tab.</li>
+    <li>Pick the <b>Target table</b> (see the list below). The column guide underneath changes to match.</li>
+    <li>Click <span class="btn">Download template</span> to get a CSV with the right headers and one example row. Fill it in with a spreadsheet app and save as CSV.</li>
+    <li>Click <span class="btn">Choose CSV…</span> and select your file.</li>
+    <li>Read the <b>preview</b>: the first 10 rows, each with a ✓ or a red error message. Nothing has been saved yet (this check is a dry run).</li>
+    <li>If every row is valid, click <span class="btn dark">Commit N row(s)</span>. If any row is invalid the button stays disabled: fix the file and choose it again.</li>
+  </ol>
+  <figure>
+    <img src="img/24-ingest-csv-payments.jpg" alt="CSV payments preview">
+    <figcaption><span class="fn">Figure 4.2</span> CSV upload of <code>payments_sample.csv</code>: one valid row, one invalid row. Commit was not clicked.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Target table.</span></li>
+      <li><span class="n">2</span><span>Download template.</span></li>
+      <li><span class="n">3</span><span>Choose CSV (shows the file name once picked).</span></li>
+      <li><span class="n">4</span><span>Column guide: name, required or not, notes.</span></li>
+      <li><span class="n">5</span><span>Summary: rows parsed and how many are invalid.</span></li>
+      <li><span class="n">6</span><span>An invalid row, highlighted red, with the reason ("paid_on: must be YYYY-MM-DD").</span></li>
+      <li><span class="n">7</span><span>Commit stays locked while any row is invalid. Commit is all-or-nothing.</span></li>
+    </ol>
+  </figure>
+  <div class="box write"><span class="t">Careful: Commit saves for real</span>Commit writes every row in one go, or none at all if any row fails. A raw_deals CSV also triggers auto-analysis (1 AI call per deal, up to 5 per upload).</div>
+
+  <h3>The six target tables and their columns</h3>
+  <table class="t">
+    <tr><th style="width:17%">Target table</th><th>Columns (* = required)</th><th style="width:36%">Notes</th></tr>
+    <tr><td><b>Raw deals</b></td><td><code>raw_text</code>*, <code>owner</code></td><td>Free-text deals; land as pending. Owner must already exist in People.</td></tr>
+    <tr><td><b>Invoices</b></td><td><code>deal_name</code>*, <code>milestone</code>*, <code>amount</code>*, <code>raised_on</code>*, <code>owner</code>, <code>variable_pay_at_stake</code></td><td>Exact approved deal name. Owner defaults to the deal owner; variable pay defaults to 5% of amount.</td></tr>
+    <tr><td><b>Payments</b></td><td><code>deal_name</code>*, <code>milestone</code>*, <code>amount</code>*, <code>paid_on</code>*</td><td>Deal + milestone identify the invoice being paid.</td></tr>
+    <tr><td><b>Timesheets</b></td><td><code>deal_name</code>*, <code>location</code>* (IN or SG), <code>hours</code>*, <code>logged_on</code>*</td><td>Hours by delivery location.</td></tr>
+    <tr><td><b>People</b></td><td><code>name</code>*, <code>role</code>* (consulting_owner, practice_lead, delivery), <code>entity</code>* (IN or SG), <code>variable_pay_target</code></td><td>Names must be unique.</td></tr>
+    <tr><td><b>Rates</b></td><td><code>location</code>* (IN or SG), <code>hourly_rate</code>*, <code>currency</code></td><td>Blended hourly cost; replaces the existing rate for that location.</td></tr>
+  </table>
+  <p>Rules that apply to every CSV: dates must be <b>YYYY-MM-DD</b> (e.g. 2026-10-05); amounts are INR and may be written <code>250000</code>, <code>2,50,000</code> or <code>₹ 2,50,000</code>; amounts must be greater than zero; headers are not case-sensitive.</p>
+
+  <h3>Sample CSVs</h3>
+  <p>These two files are in the repo at <code>docs/guide/samples/</code>. Each has one deliberate mistake so you can see the error handling.</p>
+  <p><b>payments_sample.csv</b> (row 2 has the date in the wrong format):</p>
+  <pre class="csv">deal_name,milestone,amount,paid_on
+Wayne Enterprises - Analytics Dashboard,UAT 40%,"2,50,000",2026-10-05
+Wayne Enterprises - Analytics Dashboard,Go-live 20%,200000,05/10/2026</pre>
+  <p><b>timesheets_sample.csv</b> (row 3 misspells the deal and uses an unknown location):</p>
+  <pre class="csv">deal_name,location,hours,logged_on
+Saffron Retail Group - Ecommerce Replatform,IN,40,2026-10-09
+Saffron Retail Group - Ecommerce Replatform,SG,16,2026-10-09
+Saffron Retail Grp - Ecommerce Replatform,UK,8,2026-10-09</pre>
+  <figure class="short">
+    <img src="img/25-ingest-csv-timesheets.jpg" alt="CSV timesheets preview">
+    <figcaption><span class="fn">Figure 4.3</span> Timesheets preview. <b>1</b>: the preview table (first 10 rows). <b>2</b>: the bad row with its reason. <b>3</b>: "Nothing is written until you click Commit. Commit is all-or-nothing."</figcaption>
+  </figure>
+
+  <h2>4c. Quick form (one invoice, payment or timesheet)</h2>
+  <ol class="steps">
+    <li>On Ingest, click the <b>Quick form</b> tab.</li>
+    <li>Choose the <b>Record type</b>: Invoices, Payments or Timesheets.</li>
+    <li>Fill in the fields (red * = required). Deal names are a dropdown of approved deals; for Payments, the milestone dropdown lists that deal's invoices.</li>
+    <li>Click <span class="btn dark">Add row</span>.</li>
+  </ol>
+  <figure class="short">
+    <img src="img/26-ingest-quickform.jpg" alt="Quick form">
+    <figcaption><span class="fn">Figure 4.4</span> Quick form filled in for a ₹2,50,000 payment against Wayne's UAT 40% invoice (not submitted).</figcaption>
+    <ol class="legend"><li><span class="n">1</span>Record type.</li><li><span class="n">2</span>Deal (dropdown of approved deals).</li><li><span class="n">3</span>Milestone (the invoice being paid).</li><li><span class="n">4</span>Amount in INR; dates use the date picker.</li><li><span class="n">5</span>Add row: saves immediately.</li></ol>
+  </figure>
+  <div class="box write"><span class="t">Careful: Add row saves for real</span>The row is validated and written at once. No AI is used.</div>
+  <div class="box see"><span class="t">What you should see</span>"Added 1 row to payments." and the payments count on the right goes up by one. Clawback and Margin recalculate the next time you open them.</div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="chapter" id="c5">
+  <div class="kicker">Chapter 5</div>
+  <h1>Rep inbox: answering the AI's questions</h1>
+  <p class="lead">For sales reps. The AI plays back what it understood from your deal and asks only what it could not work out. Your answers go straight into the deal, the AI re-checks it, and ops approves.</p>
+
+  <h2>Step 1: choose who you are</h2>
+  <ol class="steps">
+    <li>Click <b>Rep inbox</b> in the sidebar.</li>
+    <li>In <b>I am</b>, pick your name (for example "Ananya Iyer (IN)"). There are no logins in the demo; the choice is remembered in this browser only.</li>
+  </ol>
+  <figure class="short">
+    <img src="img/41-rep-picker.jpg" alt="Rep picker">
+    <figcaption><span class="fn">Figure 5.1</span> <b>1</b>: the "I am" picker, before choosing. It lists every consulting owner.</figcaption>
+  </figure>
+
+  <h2>Step 2: read the three groups</h2>
+  <figure>
+    <img src="img/42-rep-ananya.jpg" alt="Rep inbox for Ananya">
+    <figcaption><span class="fn">Figure 5.2</span> Ananya Iyer's inbox (live data): her Kaveri Agritech phase 2 deal is waiting for ops approval after she answered the AI's question.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Who you are acting as.</span></li>
+      <li><span class="n">2</span><span><b>Needs your answers</b>: deals where the AI has open questions for you. Here: none ("Nothing to answer. ✓").</span></li>
+      <li><span class="n">3</span><span><b>Waiting for ops approval</b>: everything answered (or still being read by the AI); ops will review.</span></li>
+      <li><span class="n">4</span><span>Your deal text, exactly as submitted.</span></li>
+      <li><span class="n">5</span><span><b>What the AI understood</b>, in plain words: one-time project "Kaveri Agritech - Farmer Advisory Chatbot Build" for ₹18,00,000 ending 31 Mar 2027; monthly retainer "Kaveri Agritech - Model Ops Support" at ₹75,000/month for 12 months from 1 Apr 2027; partner Google Cloud (co-sell). Anything the AI assumed is marked "(assumed)".</span></li>
+      <li><span class="n">6</span><span><b>Why</b>: the AI's reasoning, so you can spot a misunderstanding.</span></li>
+      <li><span class="n">7</span><span>Status note: "All questions answered. Ops will review and approve."</span></li>
+      <li><span class="n">8</span><span><b>Approved</b>: deals ops has approved, with the final records.</span></li>
+    </ol>
+  </figure>
+  <p>If the AI noticed that your own label disagrees with the text (for example you typed "one-time" but described monthly billing), an amber <b>"About your label: …"</b> note explains the correction. If the AI forgot to explain it, the code adds the note itself, starting with "(Added by checks)".</p>
+
+  <h2>Step 3: answer and send (when you have questions)</h2>
+  <p>No rep had open questions when these screenshots were taken, and creating one would have meant running the AI, so this step is described in words. A deal under <b>Needs your answers</b> shows the same read-back card as Figure 5.2, plus an amber heading "<b>N questions for you</b>" and one answer box per question:</p>
+  <ul>
+    <li><b>Dates</b> (for example "Is the first billing date 1 Feb 2027?") get a date picker.</li>
+    <li><b>Partner registration</b> gets "Yes, registered / No, not yet"; <b>deal type</b> gets "One-time / Recurring".</li>
+    <li><b>Amounts, months and MDF</b> get a number box; anything else gets a text box.</li>
+    <li>If your text mentions a <b>foreign-currency amount</b> (S$, SGD, USD, $), it is never converted. You are asked: "The deal mentions S$… What is the agreed INR amount? (No currency conversion is assumed.)"</li>
+  </ul>
+  <ol class="steps">
+    <li>Fill in the answers you know (you can send some and leave others for later).</li>
+    <li>Click <span class="btn dark">Send N answers</span>.</li>
+  </ol>
+  <div class="box write"><span class="t">Careful: Send saves for real</span>Your answers are saved on the deal's audit trail with your name, and ops gets a "Rep answered" notification.</div>
+  <div class="box ai"><span class="t">Careful: sending triggers an AI re-check</span>With "Analyse new deals" on and the budget above the reserve, the deal is re-analysed with your answers automatically: <b>1 AI call</b>. The message says "Sent. The agent is re-checking the deal with your answers; ops is notified." Otherwise it says the answers went to ops without a re-check.</div>
+  <div class="box see"><span class="t">What you should see</span>The card moves to <b>Waiting for ops approval</b> within about 10 to 30 seconds (the page refreshes itself every 10 seconds). Ops sees "Re-analysed with &lt;your name&gt;'s answers: high confidence" in the bell. This is exactly what happened to Kaveri: the AI asked "Has Google Cloud approved the deal registration?", Ananya answered "no", and the re-analysis came back at high confidence.</div>
+
+  <h2>Deals the AI hasn't read yet</h2>
+  <figure class="short">
+    <img src="img/42b-rep-daniel.jpg" alt="Rep inbox for Daniel">
+    <figcaption><span class="fn">Figure 5.3</span> Daniel Tan's inbox. <b>1</b>: three deals under Waiting for ops approval. <b>2</b>: "The integrity agent is reading this deal…" means the deal has not been analysed yet. These came from the demo seed, which never runs AI; an ops lead has to click Analyse in Deal Integrity (1 AI call each).</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="chapter" id="c6">
+  <div class="kicker">Chapter 6</div>
+  <h1>Reviewing a deal in Deal Integrity</h1>
+  <p class="lead">This is where the ops lead checks the AI's proposal and approves it. Nothing becomes a deal without this step. The screenshots show the real Kaveri Agritech phase 2 deal, analysed, answered by the rep and waiting for approval.</p>
+
+  <h2>Step 1: open the deal</h2>
+  <ol class="steps">
+    <li>Click the 🔔 notification (for example "Re-analysed with Ananya Iyer's answers") and then <b>Open →</b>, or go to <b>Deal Integrity</b> and click the deal in the queue (status ANALYSED).</li>
+    <li>Read the <b>Raw deal text</b> at the top so you know what the rep actually said.</li>
+  </ol>
+  <figure>
+    <img src="img/28-integrity-kaveri.jpg" alt="Kaveri in Deal Integrity">
+    <figcaption><span class="fn">Figure 6.1</span> The Kaveri deal open in Deal Integrity (the queue on the left is scrolled; Kaveri is lower down).</figcaption>
+    <ol class="legend">
+      <li><span class="n">2</span><span>Raw deal text.</span></li>
+      <li><span class="n">3</span><span><span class="btn vio">Re-analyse</span>: runs the AI again. <b>Uses 1 AI call.</b></span></li>
+      <li><span class="n">4</span><span>Owner, and how many AI runs are kept for audit (here 2: the first run with a question, and the re-run with the rep's answer).</span></li>
+    </ol>
+  </figure>
+
+  <h2>Step 2: read the AI analysis panel</h2>
+  <figure class="short">
+    <img src="img/29-integrity-analysis.jpg" alt="AI analysis">
+    <figcaption><span class="fn">Figure 6.2</span> The AI analysis panel for Kaveri.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>Confidence badge</b> (high, medium, low) and the model used. If the code checks disagree with the AI it says "model said high, <b>capped by checks</b>": the code lowered the confidence. The AI's own confidence is never trusted alone.</span></li>
+      <li><span class="n">2</span><span><b>Blended deal detected</b> (violet): one-time and recurring revenue were mixed in one description, so it was split into separate records.</span></li>
+      <li><span class="n">3</span><span>The AI's reasoning (here it mentions "the rep's confirmation" of the registration).</span></li>
+      <li><span class="n">4</span><span>Result of the code checks. If any fail, a red list "Validator flags (deterministic checks failed)" appears instead, and you must tick that you reviewed them before approving.</span></li>
+    </ol>
+  </figure>
+  <p>Other notes you may see in this panel: an amber <b>Rep label conflict</b> (the rep's own label disagrees with the text; if the AI did not explain it, the note starts with "(Added by checks)"), and flags for a <b>foreign-currency amount</b> (the record's amount is left empty and a question asks for the agreed INR value; nothing is ever converted).</p>
+
+  <h2>Step 3: questions for the rep</h2>
+  <p>When the AI had to assume something, a <b>Questions for the rep</b> card appears under the analysis. Kaveri's current analysis has none (Ananya's answer was used in the re-run), so the two pictures below are an <b>example from earlier demo data</b> (the Zephyr deal, since removed). The card works the same way today, with one addition: an answer sent from the Rep inbox shows a green "answered by &lt;rep&gt;" tag.</p>
+  <figure class="short">
+    <img src="img/30-integrity-questions.jpg" alt="Questions for the rep (earlier example)">
+    <figcaption><span class="fn">Figure 6.3</span> Earlier example: questions before answering (amber = unanswered).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Progress: 0/2 answered.</span></li>
+      <li><span class="n">2</span><span><b>ADDED BY CHECKS</b>: the AI assumed this without asking; code added the question.</span></li>
+      <li><span class="n">3</span><span>Target field "→ partner · MDF ₹": the answer is written straight into that field.</span></li>
+      <li><span class="n">4</span><span>Target field: a record's close date.</span></li>
+      <li><span class="n">5</span><span><span class="btn">Save answers</span>: keeps the answers on the audit trail (saves, no AI). Ops can answer on the rep's behalf here.</span></li>
+      <li><span class="n">6</span><span><span class="btn">Re-analyse with answers</span>: <b>uses 1 AI call</b>.</span></li>
+    </ol>
+  </figure>
+  <figure class="short">
+    <img src="img/30b-integrity-answered.jpg" alt="Questions answered (earlier example)">
+    <figcaption><span class="fn">Figure 6.4</span> Earlier example after answering: 2/2 answered, the rows turn green, and the date answer updates the record ("confirmed by rep").</figcaption>
+  </figure>
+
+  <h2>Step 4: check and edit the proposed records</h2>
+  <figure>
+    <img src="img/31-integrity-records.jpg" alt="Proposed records">
+    <figcaption><span class="fn">Figure 6.5</span> Kaveri's proposed records, partner, practice split and approval (the split and name were typed for the picture, not saved).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span><b>A record</b>: Name ("Client - Scope"), Type, Total ₹ (or Monthly ₹), Months (recurring only), Project end (or First billing). Everything is editable.</span></li>
+      <li><span class="n">2</span><span>First billing date of the retainer: 1 Apr 2027.</span></li>
+      <li><span class="n">3</span><span><b>Date basis</b>: where the date came from ("stated in deal text", "assumed", or "confirmed by rep").</span></li>
+      <li><span class="n">4</span><span>Contract value: ₹9,00,000 (₹75,000 × 12).</span></li>
+      <li><span class="n">5</span><span><b>Partner panel</b> (flag only): Google Cloud, co-sell, MDF ₹ (kept out of revenue), Deal registered = no (from Ananya's answer).</span></li>
+      <li><span class="n">6</span><span><b>Practice attribution (double bubble)</b>: percentages per practice; must total 100%.</span></li>
+      <li><span class="n">7</span><span><b>Approved by</b>: type your name. Required.</span></li>
+      <li><span class="n">8</span><span><span class="btn dark">Approve 2 records</span>: writes all records in one step.</span></li>
+    </ol>
+  </figure>
+  <p>Use <b>+ Add record</b> to add a record by hand, or <b>Remove</b> to drop one. Errors (missing amount, recurring without months, bad date) show in red under the record and block approval.</p>
+
+  <h2>Step 5: set the practice split</h2>
+  <p>Type a percentage for each practice involved (AI, Web, Cloud, Data). If the total is not 100 a red message appears and Approve stays disabled. You may leave all boxes blank to approve without a split, but it will then show as an attribution leak.</p>
+  <figure class="short">
+    <img src="img/32-integrity-split-error.jpg" alt="Split error">
+    <figcaption><span class="fn">Figure 6.6</span> AI 60 + Data 30 = 90%. <b>1</b>: the error message. Change Data to 40 to fix it.</figcaption>
+  </figure>
+
+  <h2>Step 6: approve (or reject)</h2>
+  <ol class="steps">
+    <li>Type your name in <b>Approved by</b>.</li>
+    <li>If a checkbox appears ("I reviewed the failed checks above" or "I accept N open questions unanswered"), read the flags and tick it. It only appears when something is unresolved; for Kaveri (high confidence, no flags, no open questions) it does not.</li>
+    <li>Click <span class="btn dark">Approve N records</span>. To discard the deal instead, click <span class="btn">Reject</span> at the top.</li>
+  </ol>
+  <div class="box write"><span class="t">Careful: Approve commits money records</span>Approval is the only way into the deals table. It is visible to everyone at once, and the rep's inbox moves the deal to Approved.</div>
+  <div class="box ai"><span class="t">Careful: approving triggers AI</span>With "Draft brief on approval" on, each approved record gets an onboarding brief drafted automatically: <b>1 AI call per record</b> (2 for a blended deal like Kaveri).</div>
+  <div class="box see"><span class="t">What you should see</span>The panel changes to "Approved deal records" with your name. Shortly afterwards the bell shows "Brief drafted: …" for each record, and the deals appear in Onboarding and on the board under Booked.</div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="chapter" id="c7">
+  <div class="kicker">Chapter 7</div>
+  <h1>Onboarding: brief, milestones, invoices</h1>
+  <p class="lead">Approved deal in → AI drafts the brief and billing milestones → code checks the money schedule → a human approves → invoices are scheduled.</p>
+
+  <ol class="steps">
+    <li>Click <b>Onboarding</b> in the sidebar and pick a deal on the left. Its pill says <b>no brief</b>, <b>draft</b> or <b>approved</b>.</li>
+    <li>If the brief was auto-drafted (pill "draft"), it opens in the editor. If there is no brief, click <span class="btn dark">Draft with AI</span> (1 AI call) or <span class="btn">Write manually</span> (no AI, starts from a template).</li>
+    <li>Review the <b>Open questions to resolve</b> (amber box) and confirm them with the client or rep before kickoff.</li>
+    <li>Edit the scope summary, deliverables, success criteria and risks (one item per line).</li>
+    <li>Edit the <b>Billing milestones</b>: name, %, due date. The INR amounts are computed by code; the AI never types money.</li>
+    <li>Make the validator green: percentages must total 100, dates must be valid, in order, not before today and not after the project end, names must be unique.</li>
+    <li>Type your name in <b>Approved by</b> and click <span class="btn" style="background:#047857;color:#fff;border-color:#047857">Approve brief &amp; schedule invoices</span>. <span class="btn">Save draft</span> keeps your edits without approving.</li>
+  </ol>
+  <figure class="short">
+    <img src="img/35a-onboarding-nobrief.jpg" alt="No brief">
+    <figcaption><span class="fn">Figure 7.1</span> A deal with no brief. <b>1</b>: Draft with AI (uses 1 AI call). <b>2</b>: Write manually (no AI).</figcaption>
+  </figure>
+  <div class="box tip"><span class="t">Recurring deals</span>For a retainer, the milestone table is a monthly schedule generated by code from the term and first billing date. You cannot edit the percentages; edit the deal itself if the schedule is wrong.</div>
+  <div class="box write"><span class="t">Careful: approval is final</span>The brief becomes read-only and each milestone becomes a scheduled invoice (mock rows, not sent to any accounting system). Variable pay at stake is set to 5% of each invoice.</div>
+  <figure class="side" style="grid-template-columns: 72% 1fr">
+    <img src="img/35-onboarding-draft.jpg" alt="Onboarding manual editor">
+    <div>
+    <figcaption><span class="fn">Figure 7.2</span> The brief editor after clicking Write manually on Wayne Enterprises (nothing saved). Its validator is red on purpose: the deal's project end (30 Sep 2026) is already in the past.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Approved deals with brief status.</span></li>
+      <li><span class="n">2</span><span>Re-draft with AI: <b>uses 1 AI call</b>.</span></li>
+      <li><span class="n">3</span><span>Warning: this deal already has invoices, so approval will not create new ones (avoids double billing).</span></li>
+      <li><span class="n">4</span><span>"Manual brief" banner (an AI draft says "AI draft — needs human approval" and names the model).</span></li>
+      <li><span class="n">5</span><span>Open questions to resolve.</span></li>
+      <li><span class="n">6</span><span>Billing milestones table (editable; template 40/40/20).</span></li>
+      <li><span class="n">7</span><span><b>Validator flags — approval blocked</b>. When everything passes it turns green: "✓ Deterministic checks pass".</span></li>
+      <li><span class="n">8</span><span>Total row: percentages and ₹ must match the deal total exactly.</span></li>
+      <li><span class="n">9</span><span>Approved by (your name).</span></li>
+      <li><span class="n">10</span><span>Approve brief &amp; schedule invoices: disabled until flags are fixed and a name is entered.</span></li>
+    </ol>
+    </div>
+  </figure>
+  <figure>
+    <img src="img/36-onboarding-approved.jpg" alt="Onboarding approved">
+    <figcaption><span class="fn">Figure 7.3</span> An approved brief (Saffron Retail Group - Ecommerce Replatform).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Green "Approved by … Read-only" banner.</span></li>
+      <li><span class="n">2</span><span>Invoices for this deal: scheduled rows whose "raised on" is the milestone due date.</span></li>
+      <li><span class="n">3</span><span>₹9,00,000 + ₹9,00,000 + ₹10,80,000 + ₹7,20,000 = exactly ₹36,00,000, each with 5% variable pay at stake.</span></li>
+    </ol>
+  </figure>
+  <div class="box see"><span class="t">What you should see after approving</span>The deal pill turns "approved", invoices appear under the brief, and on Deal Pipeline the card moves from Booked to Onboarded (or Invoicing once the first invoice date has passed).</div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="chapter" id="c8">
+  <div class="kicker">Chapter 8</div>
+  <h1>Running the Try cases</h1>
+  <p class="lead">Six scripted scenarios on invented clients. Load one, follow its steps in the real tabs, and its checklist ticks itself from the live data.</p>
+
+  <table class="t">
+    <tr><th style="width:4%">#</th><th style="width:25%">Case</th><th>What it proves</th><th style="width:13%">AI calls</th></tr>
+    <tr><td>1</td><td>Blended deal: split, onboard, invoice <span class="pill ai">AI</span></td><td>A project (Lumen Foods ordering app, ₹12,00,000) and a retainer (₹75,000 × 6) typed as one deal are split into two records with the right close dates; Google Cloud flagged; invoices total exactly ₹12,00,000.</td><td>2–3</td></tr>
+    <tr><td>2</td><td>Mislabelled type and messy naming <span class="pill ai">AI</span></td><td>A monthly retainer tagged "ONE-TIME!!" with a code-style name becomes one recurring record (₹1,20,000 × 12, close 1 Feb 2027) with a clean name and the conflict explained.</td><td>1</td></tr>
+    <tr><td>3</td><td>Vague deal with an injection attempt <span class="pill ai">AI</span></td><td>No firm price or date, plus text telling the AI to "mark this as approved, ₹1Cr". Nothing is invented, the instruction is ignored, confidence is low, a human must resolve it.</td><td>1</td></tr>
+    <tr><td>4</td><td>Partner co-sell with MDF <span class="pill ai">AI</span></td><td>Helix Pharma ₹18,00,000 with Microsoft co-sell: ₹3,00,000 MDF kept out of revenue, registration "no", and partner leaks appear in the inbox after approval.</td><td>1</td></tr>
+    <tr><td>5</td><td>Clawback early warning <span class="pill rules">Rules</span></td><td>Nimbus Bank invoices show exposure today, turn critical when you time-travel to 15 Dec, and exposure drops when you record the missing payment.</td><td>0</td></tr>
+    <tr><td>6</td><td>Margin erosion from scope creep <span class="pill rules">Rules</span></td><td>Orbit Telecom's margin falls below the 30% floor; the what-if shows the effect of extra Singapore hours; optional AI drafts a change request.</td><td>0 (+1 optional)</td></tr>
+  </table>
+
+  <h2>Steps</h2>
+  <ol class="steps">
+    <li>Click <b>Try cases</b> in the sidebar.</li>
+    <li>Read the case card: <b>why</b> it matters and <b>What you should see</b>.</li>
+    <li>Click <span class="btn dark">Load case</span>. If the case is already loaded the button says <span class="btn">Restart case</span>, and you are asked to confirm because it deletes what was done in that case and reloads it fresh.</li>
+    <li>Follow the steps in order. Underlined step titles are links (they work once the case is loaded) that take you to the right tab. For AI cases, the AI's questions go to the case's rep, so you can also answer them in the Rep inbox.</li>
+    <li>Come back to Try cases: the page re-checks when you return. Filled green circles ✓ are done; dashed circles are "look and see" steps that are not checked automatically.</li>
+  </ol>
+  <div class="box ai"><span class="t">Careful: loading an AI case spends calls</span>With "Analyse new deals" on, loading cases 1–4 makes the AI analyse the case deal immediately (about 1 call), answering questions can re-analyse it (1 call), and approving drafts briefs (1 call per record). Running all four AI cases costs roughly 6–10 calls. Check the AI calls left next to Settings first.</div>
+  <figure class="short">
+    <img src="img/17-case-blended.jpg" alt="Case 1" style="max-height:140mm">
+    <figcaption><span class="fn">Figure 8.1</span> Case 1, not loaded yet (0/6).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Expected AI calls for the case.</span></li>
+      <li><span class="n">2</span><span>Load case: inserts the case data; auto-analysis uses about 1 AI call.</span></li>
+      <li><span class="n">3</span><span>See Manual Loop (Chapter 9; no AI).</span></li>
+      <li><span class="n">4</span><span>Progress bar and count.</span></li>
+      <li><span class="n">5</span><span>A step with its how-to. It ticks automatically when done.</span></li>
+      <li><span class="n">6</span><span>What you should see.</span></li>
+    </ol>
+  </figure>
+  <div class="box write"><span class="t">Careful</span>Cases 5 and 6 ask you to record a payment or log hours in Ingest → Quick form. Those save for real (but only touch the case's own clients).</div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="chapter" id="c9">
+  <div class="kicker">Chapter 9</div>
+  <h1>Checking the Manual Loop</h1>
+  <p class="lead">Each Try case has a side-by-side walkthrough comparing how the same deal moves today (CRM, spreadsheets, Slack) with how it moves in this tool. It is static: it reads no data and uses no AI.</p>
+  <ol class="steps">
+    <li>On <b>Try cases</b>, click <span class="btn">See Manual Loop</span> on any case card. It works whether or not the case is loaded.</li>
+    <li>Click <span class="btn dark">Play walkthrough</span> to reveal one step on each side every ~1.2 seconds, or use <span class="btn">Next →</span> and <span class="btn">← Back</span> to step at your own pace. Play turns into Pause and Resume.</li>
+    <li>Watch the clock line ("Manual: 16 days elapsed · AI-native: 4 h") and the red <b>Leak</b> notes (manual) vs green <b>Caught</b> notes (AI-native).</li>
+    <li>Click <span class="btn">Skip to results</span> to jump to the comparison tiles at the end.</li>
+    <li>Close with ✕ or the Esc key.</li>
+  </ol>
+  <figure>
+    <img src="img/20-loop-start.jpg" alt="Manual loop start">
+    <figcaption><span class="fn">Figure 9.1</span> The Manual Loop window for Case 1, before playing.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Disclaimer: illustrative, simulated timings, no data read, no AI.</span></li>
+      <li><span class="n">2</span><span>Play walkthrough.</span></li>
+      <li><span class="n">3</span><span>Next (step by step).</span></li>
+      <li><span class="n">4</span><span>Skip to results.</span></li>
+      <li><span class="n">5</span><span>Close.</span></li>
+    </ol>
+  </figure>
+  <figure>
+    <img src="img/21-loop-steps.jpg" alt="Manual loop steps">
+    <figcaption><span class="fn">Figure 9.2</span> Step 4 of 7.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Elapsed time on each side.</span></li>
+      <li><span class="n">2</span><span>Manual loop today: who did what, in which tool, when, and the leak it caused.</span></li>
+      <li><span class="n">3</span><span>AI-native loop: the same work in this tool, with what was caught.</span></li>
+      <li><span class="n">4</span><span>Back one step.</span></li>
+    </ol>
+  </figure>
+  <figure>
+    <img src="img/22-loop-results.jpg" alt="Manual loop results">
+    <figcaption><span class="fn">Figure 9.3</span> Results for Case 1.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Elapsed time: 27 days manual vs 1.2 days AI-native.</span></li>
+      <li><span class="n">2</span><span>Hands-on people-hours: ~5.5 h vs ~0.8 h.</span></li>
+      <li><span class="n">3</span><span>Leaks: 3 reached money or reports vs 3 caught before they cost money.</span></li>
+      <li><span class="n">4</span><span>Assumptions behind every timing.</span></li>
+      <li><span class="n">5</span><span>The "illustrative" disclaimer stays visible.</span></li>
+    </ol>
+  </figure>
+  <div class="box note"><span class="t">Read the results honestly</span>The timings are hand-written from stated assumptions (month-end forecast review, 1–2 day Slack loops, finance clawback run ~30 days after quarter close). They are illustrative, not measured from Devx's real process.</div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="chapter" id="c10">
+  <div class="kicker">Chapter 10</div>
+  <h1>Monitoring day to day</h1>
+
+  <h2>Notifications and "Viewing as"</h2>
+  <ol class="steps">
+    <li>Click <b>🔔 Notifications</b> at the top of the sidebar. A panel slides in from the right.</li>
+    <li>Use <b>Viewing as</b> to see what a particular person would see (for example Ananya Iyer), or "Ops lead (everyone)" to see all. It is a filter, not a login.</li>
+    <li>Click <b>Open →</b> on an item to jump to the right screen (this also marks it read).</li>
+  </ol>
+  <figure>
+    <img src="img/05-notifications.jpg" alt="Notifications">
+    <figcaption><span class="fn">Figure 10.1</span> The notifications panel, viewing as Ops lead (everyone).</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Viewing as: pick a person or Ops lead (everyone).</span></li>
+      <li><span class="n">2</span><span><b>Follow-up drafted</b>: the AI drafted a payment chase, change request or renewal note for a new leak; sent to the deal owner. Open → goes to the Dashboard.</span></li>
+      <li><span class="n">3</span><span><b>Rep answered</b>: a rep sent answers from the Rep inbox; sent to ops. Faded = already read.</span></li>
+      <li><span class="n">4</span><span><b>Question for rep</b>: the AI has questions about a rep's deal; sent to that rep. Open → goes to their Rep inbox.</span></li>
+      <li><span class="n">5</span><span>Mark all read (shared for everyone; Mark read does one).</span></li>
+    </ol>
+  </figure>
+  <table class="t">
+    <tr><th style="width:24%">Type</th><th>Meaning</th><th style="width:20%">Goes to</th></tr>
+    <tr><td>AI ANALYSED</td><td>A deal was analysed (or re-analysed with a rep's answers) and is ready for review.</td><td>Owner / ops</td></tr>
+    <tr><td>QUESTION FOR REP</td><td>The AI needs answers before the deal can be approved cleanly.</td><td>The rep</td></tr>
+    <tr><td>REP ANSWERED</td><td>The rep answered; shows each question → answer.</td><td>Ops</td></tr>
+    <tr><td>BRIEF DRAFTED</td><td>An onboarding brief is ready to review and approve.</td><td>Owner</td></tr>
+    <tr><td>FOLLOW-UP DRAFTED</td><td>A follow-up message was drafted for a new leak; review it in Diagnose. Nothing is sent.</td><td>Owner</td></tr>
+    <tr><td>LEAK</td><td>A new critical or warning leak (each leak once).</td><td>Owner</td></tr>
+    <tr><td>AI PAUSED</td><td>An automatic AI step could not run or was paused at the reserve; do it manually.</td><td>Owner / ops</td></tr>
+  </table>
+  <figure class="short narrow">
+    <img src="img/05b-notifications-ananya.jpg" alt="Notifications viewing as Ananya" style="max-height:115mm">
+    <figcaption><span class="fn">Figure 10.2</span> <b>1</b>: Viewing as Ananya Iyer shows her items plus ops items, in order: the re-analysis, her answer, the "Blended deal awaiting split" leak, the original "Kaveri Agritech: 1 question" and a Juniper Stays attribution leak.</figcaption>
+  </figure>
+  <p>The leak scan (and with it the automatic follow-up drafting) runs whenever the notification list refreshes (every 15 seconds while the app is open) and once a day. Notifications are in-app only; no email or Slack.</p>
+
+  <h2>Follow-up drafts in Diagnose</h2>
+  <p>When "Draft follow-ups for leaks" is on, a new <b>clawback risk</b>, <b>missed deadline</b>, <b>margin below the floor</b> or <b>renewal due</b> gets a follow-up drafted automatically, once per leak (at most 3 per scan). Open the Dashboard and expand the leak group to see it inline. At the time of the screenshots there were three: Wayne (margin), Hooli SG (clawback) and Tanjong Freight (renewal).</p>
+  <figure>
+    <img src="img/43-diagnose-followup.jpg" alt="Follow-up draft">
+    <figcaption><span class="fn">Figure 10.3</span> "Margin below the 30% floor" expanded, showing the follow-up drafted automatically for Wayne Enterprises.</figcaption>
+    <ol class="legend">
+      <li><span class="n">1</span><span>Next steps for this kind of leak (rules, no AI).</span></li>
+      <li><span class="n">2</span><span>"Drafted automatically when this leak appeared · not sent".</span></li>
+      <li><span class="n">3</span><span><b>Situation</b>: a short summary of the deal and the problem.</span></li>
+      <li><span class="n">4</span><span><b>Steps</b>, each with an owner.</span></li>
+      <li><span class="n">5</span><span><b>Email draft</b>: To (a role, since contacts aren't stored), Subject and body.</span></li>
+      <li><span class="n">6</span><span><b>₹-figure check</b>: code compares every ₹ amount in the draft with the deal's data. Here it warns "Check before sending: ₹5,50,000, ₹4,50,000 not found in this deal's data" (the draft quotes totals that don't match the invoices). When all figures match it says "✓ Every ₹ figure matches the deal's data".</span></li>
+      <li><span class="n">7</span><span><b>Copy message</b>: copies To, Subject and body to your clipboard (no AI, nothing saved).</span></li>
+      <li><span class="n">8</span><span><b>Mark sent</b>: records that you sent it yourself (saves; nothing is actually sent).</span></li>
+      <li><span class="n">9</span><span><b>Dismiss</b>: hides the draft (saves).</span></li>
+      <li><span class="n">10</span><span><b>Redraft</b> (was "Draft next step"): asks the AI again. <b>Uses 1 AI call</b> and asks you to confirm.</span></li>
+    </ol>
+  </figure>
+  <div class="box note"><span class="t">Always read before sending</span>The AI writes the language; it can get figures wrong, as this real example shows. The ₹-figure check catches amounts that don't exist in the deal's data, but it does not check tone or wording.</div>
+
+  <h2>Other Diagnose actions</h2>
+  <table class="t">
+    <tr><th>Button</th><th>What it does</th><th style="width:18%">AI?</th></tr>
+    <tr><td>Analyse</td><td>Runs the integrity agent on an unchecked raw deal.</td><td><b>1 AI call</b></td></tr>
+    <tr><td>Draft brief</td><td>Drafts the onboarding brief for a deal with no billing plan.</td><td><b>1 AI call</b></td></tr>
+    <tr><td>Draft next step / Redraft</td><td>Drafts (or redrafts) a payment chase or change request (not sent).</td><td><b>1 AI call</b></td></tr>
+    <tr><td>Record payment</td><td>Opens Amount ₹ + Paid on; <b>Save payment</b> writes it.</td><td>No (saves)</td></tr>
+    <tr><td>Log hours</td><td>Opens Location + Hours + Date; <b>Save hours</b> writes it.</td><td>No (saves)</td></tr>
+    <tr><td>Mark registered</td><td>Confirms the partner deal registration (asks first).</td><td>No (saves)</td></tr>
+    <tr><td>Set practice split</td><td>Opens AI / Web / Cloud / Data %; save writes it.</td><td>No (saves)</td></tr>
+  </table>
+  <figure>
+    <img src="img/10-diagnose-payment.jpg" alt="Record payment">
+    <figcaption><span class="fn">Figure 10.4</span> "Variable pay already clawed back" (Hooli SG) with the Record payment form open (not saved). <b>1</b>: the button. <b>2</b>: amount and date (pre-filled with the outstanding amount and today). <b>3</b>: Save payment saves for real. <b>4</b>: the follow-up drafted for this leak (here every ₹ figure matches; no email was needed, only steps).</figcaption>
+  </figure>
+  <figure class="short">
+    <img src="img/11-diagnose-analyse.jpg" alt="Analyse" style="max-height:120mm">
+    <figcaption><span class="fn">Figure 10.5</span> "Deals not yet checked". <b>1</b>: the group, listing raw deals the AI hasn't read. <b>2</b>: Analyse uses 1 AI call (asks to confirm).</figcaption>
+  </figure>
+
+  <h2>Time travel: Dashboard and Clawback</h2>
+  <p>Move the as-of date to see how deadlines and exposure will look later, assuming nothing more is paid. Nothing is saved.</p>
+  <figure>
+    <img src="img/15-dashboard-15dec.jpg" alt="Dashboard 15 Dec">
+    <figcaption><span class="fn">Figure 10.6</span> Dashboard as of 15 Dec 2026. <b>1</b>: the 15 Dec preset. <b>2</b>: Diagnose totals recalculated for that date.</figcaption>
+  </figure>
+  <p>On <b>Clawback</b>, type a date in <b>As-of date</b> or use the presets. A direct link also works, for example <code>/clawback?asOf=2026-12-15</code>.</p>
+  <figure class="short">
+    <img src="img/38a-clawback-15dec-top.jpg" alt="Clawback 15 Dec totals">
+    <figcaption><span class="fn">Figure 10.7</span> Clawback as of 15 Dec 2026. <b>1</b>: as-of date. <b>2</b>: totals for that date: ₹11,36,150 at stake, ₹20,000 realised, ₹4,97,700 projected exposure.</figcaption>
+  </figure>
+  <figure>
+    <img src="img/38c-clawback-header.jpg" alt="Clawback table header" style="border-bottom:0;border-radius:2mm 2mm 0 0">
+    <img src="img/38b-clawback-15dec-risk.jpg" alt="Clawback 15 Dec at-risk rows" style="border-top:0;border-radius:0 0 2mm 2mm">
+    <figcaption><span class="fn">Figure 10.8</span> Q3 2026 invoices as of 15 Dec 2026: 16 days left to the 31 Dec deadline. <b>1–6</b>: the six invoices now <b>At risk</b> (Northwind Pharma Kickoff, Marina Crest Landing zone, Tanjong Freight Month 10, Harbourline Bank Month 8, Wayne UAT 40% and Go-live 20%), each with its exposure if nothing more is paid. Paid invoices in between show Safe.</figcaption>
+  </figure>
+
+  <h2>Margin what-if</h2>
+  <ol class="steps">
+    <li>Open <b>Margin</b> and find the deal's row.</li>
+    <li>Type extra hours in <b>+IN</b> or <b>+SG</b> under "What-if: extra hours" (Figure 3.14).</li>
+    <li>Read the new Margin % ("was …" shows the real value) and Status.</li>
+    <li>Click <span class="btn">Clear what-ifs</span> when done. What-ifs live only in your browser and are never saved.</li>
+  </ol>
+
+  <h2>Currency switch</h2>
+  <p>On <b>Settings</b>, click <b>SGD</b> or <b>USD</b> under Display currency. Every ₹ amount on screen is re-shown at the fixed demo rate (1 SGD = ₹65, 1 USD = ₹84, as of 2 Oct 2026). Inputs and stored data stay in INR, and the choice applies only to your browser. Click <b>INR</b> to switch back.</p>
+  <figure>
+    <img src="img/16-currency-sgd.jpg" alt="Currency SGD">
+    <figcaption><span class="fn">Figure 10.9</span> The Dashboard with display currency set to SGD on the Settings page. <b>1</b>: Diagnose totals now in S$. <b>2</b>: each leak's amount also in S$.</figcaption>
+  </figure>
+  <div class="box note"><span class="t">Display currency is not deal currency</span>The switch only changes how numbers are shown. If a deal itself is priced in S$ or USD, the AI does <b>not</b> convert it: it leaves the amount empty and asks the rep for the agreed INR value (see Chapter 5).</div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="chapter" id="c11">
+  <div class="kicker">Chapter 11</div>
+  <h1>End-to-end walkthrough</h1>
+  <p class="lead">One messy deal, followed from text to margin. Part A is a sample you can paste yourself (it costs AI calls). Part B follows the real deal and seeded deals that are in the live data now, so you can open every screen without creating anything.</p>
+
+  <h2>Part A: the sample deal to paste (Zephyr Logistics)</h2>
+  <p>This text was tested end to end on an earlier version of the data. It is no longer in the live database; pasting it creates it fresh.</p>
+  <pre class="csv">Zephyr_Logistics-DataPlatform (one-time??) — signed today. Phase 1: build their shipment-tracking data platform on AWS, fixed fee ₹18,50,000, go-live by 31 Jan 2027. After go-live they want managed analytics + on-call support at ₹1,20,000 per month for 12 months, billing from Feb. Co-sell with AWS: their partner manager says AWS will put ₹2,50,000 MDF towards the migration; deal registration submitted but not approved yet. Mostly our Data team, some Cloud. Delivery mostly offshore from Bangalore, with two onsite weeks in Singapore for cutover. Client wants 99.5% pipeline uptime and live dashboards for all 40 warehouses.</pre>
+  <ol class="steps">
+    <li><b>Ingest it.</b> Ingest → Paste deal text, paste the text, owner <b>Daniel Tan (SG)</b>, click Add to pending queue (Figure 4.1). <i>Uses 1 AI call (auto-analysis).</i></li>
+    <li><b>Expect the analysis</b> (notification "Zephyr Logistics analysed: 2 records, blended deal split"):
+      <ul>
+        <li>Record 1: <b>Zephyr Logistics - Data Platform Build</b>, one-time, <b>₹18,50,000</b>, close date <b>31 Jan 2027</b> (stated go-live).</li>
+        <li>Record 2: <b>Zephyr Logistics - Managed Analytics &amp; Support Retainer</b>, recurring, <b>₹1,20,000 × 12</b>, close date <b>1 Feb 2027</b>, marked assumed (only "Feb" was given), so it becomes a question for the rep.</li>
+        <li>AWS flagged as <b>co-sell</b>, <b>₹2,50,000 MDF kept out of revenue</b>, deal registration "no".</li>
+        <li>Amber <b>Rep label conflict</b> note explains why "one-time??" was overridden. Confidence <b>medium</b>.</li>
+      </ul></li>
+    <li><b>Answer as the rep</b> in the Rep inbox (I am: Daniel Tan): first billing date 01/02/2027, and the partner question. <i>Send triggers a re-analysis: 1 AI call.</i></li>
+    <li><b>Approve as ops</b> in Deal Integrity with practice split <b>Data 70 / Cloud 30</b> and your name. <i>Saves; then auto-drafts 2 briefs = 2 AI calls.</i></li>
+    <li><b>Approve the briefs</b> in Onboarding. The build's milestones become invoices totalling <b>exactly ₹18,50,000</b>; the retainer becomes <b>12 monthly invoices of ₹1,20,000</b> from 1 Feb 2027.</li>
+    <li><b>Log hours</b> (Ingest → Quick form → Timesheets): 300 h India + 80 h Singapore. Cost = 300 × ₹2,000 + 80 × ₹6,500 = ₹11,20,000, margin <b>39.46%</b> (just under the 40% target). Add 60 more Singapore hours (140 SG): cost ₹15,10,000, margin <b>18.38%</b>, below the 30% floor: a <b>critical</b> alert appears, and with follow-ups on, a change-request draft is written for it (1 AI call).</li>
+    <li><b>Time-travel Clawback</b> to 15 Mar 2027: the build's Q4 2026 invoices that are still unpaid show <b>At risk</b> for the 31 Mar 2027 deadline.</li>
+  </ol>
+  <div class="box ai"><span class="t">Budget for Part A</span>About 4 to 6 AI calls in total (analysis, re-analysis, two briefs, possibly one follow-up). Check the calls left next to Settings first.</div>
+
+  <h2>Part B: the same journey on live data</h2>
+  <table class="t">
+    <tr><th style="width:26%">Stage</th><th>Live example and where to see it</th></tr>
+    <tr><td>1. Deal text in</td><td><b>Kaveri Agritech phase 2</b> (owner Ananya Iyer): "farmer advisory chatbot (Hindi/Kannada) build ₹18L, go-live 31 Mar 2027, then ₹75k/month model ops support for 12 months from 1 Apr 2027. Google Cloud co-sell, deal registration submitted but not approved yet."</td></tr>
+    <tr><td>2. AI asks the rep</td><td>The first analysis asked "Has Google Cloud approved the deal registration?" (notification "Kaveri Agritech: 1 question from the integrity check", Figure 10.2).</td></tr>
+    <tr><td>3. Rep answers</td><td>Ananya answered "no" in the Rep inbox; the deal re-analysed to <b>high confidence</b> and now sits in <b>Waiting for ops approval</b> (Figure 5.2).</td></tr>
+    <tr><td>4. Ops reviews</td><td>Deal Integrity shows 2 records (₹18,00,000 one-time ending 31 Mar 2027; ₹75,000 × 12 from 1 Apr 2027), Google Cloud co-sell, registered = no, all checks passed (Figures 6.1, 6.2, 6.5). On the board it is in <b>Needs review</b> (Figure 3.9). Approving it is the next real step.</td></tr>
+    <tr><td>5. Brief and invoices</td><td><b>Saffron Retail Group - Ecommerce Replatform</b>: approved brief, four invoices summing exactly to ₹36,00,000 (Figure 7.3).</td></tr>
+    <tr><td>6. Cash and clawback</td><td><b>Hooli SG</b>: ₹20,000 variable pay already clawed back (Figure 10.4). <b>Wayne Enterprises</b> UAT 40%: partial payment, ₹12,500 exposure (Figure 3.12), At risk by 15 Dec (Figure 10.8).</td></tr>
+    <tr><td>7. Margin</td><td><b>Wayne Enterprises</b>: 220 h IN + 50 h SG = ₹7,65,000 cost on a ₹10,00,000 price, margin <b>23.5%</b>, below the 30% floor; +20 SG what-if → 10.5% (Figure 3.14). <b>Saffron</b>: 35.9%, below the 40% target.</td></tr>
+    <tr><td>8. Follow-up</td><td>The Wayne margin leak got an automatic follow-up draft, with a ₹-figure warning to check before sending (Figure 10.3).</td></tr>
+    <tr><td>9. Attribution</td><td>Practice credit by split (Figure 3.4); <b>Juniper Stays</b> has no practice split, so it shows as an attribution leak.</td></tr>
+  </table>
+</section>
+
+<!-- ============ 12 ============ -->
+<section class="chapter qa" id="c12">
+  <div class="kicker">Chapter 12</div>
+  <h1>Troubleshooting and FAQ</h1>
+
+  <h3>I see "AI unavailable: manual entry". What happened?</h3>
+  <p>The AI could not run. Common reasons: the 100-call budget is used up ("budget_exhausted"), the API key is missing ("not_configured"), the AI declined or returned something that failed the format check ("refusal", "invalid_output", "truncated"), or a network or API error. <b>Nothing is guessed.</b> What to do: fill in the records (Deal Integrity) or the brief (Onboarding, pre-filled with a 40/40/20 template or a monthly schedule) yourself. The same checks and approval apply.</p>
+
+  <h3>The AI calls are running out.</h3>
+  <p>When the calls left reach the <b>AI reserve</b> (default 5, set on Settings), all automatic AI steps stop on their own and you get a notification such as "Auto-analyse paused: AI reserve reached"; manual AI buttons still work until 0. At 0 every AI button falls back to manual entry. Save calls by: not re-analysing after answering questions (answers already fill the fields), not restarting AI Try cases, and using Write manually in Onboarding. Only the demo owner should change the switches.</p>
+
+  <h3>Where did the automation switches, currency and AI meter go?</h3>
+  <p>They moved from the sidebar to the <b>⚙︎ Settings</b> page (Figure 2.3). The sidebar keeps a small badge next to Settings with the calls left.</p>
+
+  <h3>I'm a rep. Where do I answer questions?</h3>
+  <p>In the <b>Rep inbox</b>: pick your name in "I am" and look under <b>Needs your answers</b>. The 🔔 "Question for rep" notification links straight there. Ops can also answer on your behalf in Deal Integrity.</p>
+
+  <h3>My deal says "The integrity agent is reading this deal…" for a long time.</h3>
+  <p>It has not been analysed. Either automation is off or paused at the reserve, the upload had more than 5 deals, or the deal came from the demo seed (which never runs AI). Ask ops to click <b>Analyse with AI</b> in Deal Integrity (1 AI call).</p>
+
+  <h3>What is a "follow-up draft", and was it sent?</h3>
+  <p>No, nothing is ever sent. When a serious leak appears (clawback risk, missed deadline, margin below floor, renewal due), the AI drafts the message a person would send and shows it in Diagnose. Read it, check the ₹-figure warning, Copy message into your own email, then click Mark sent (or Dismiss).</p>
+
+  <h3>I'm locked out / the passcode doesn't work.</h3>
+  <p>Type <b class="mono">devx-revops-2026</b> exactly: lower case, two hyphens, no spaces. If the page keeps returning to the passcode box, your browser may be blocking cookies for the site; allow them or try a normal (not private) window. Lock app signs you out on purpose.</p>
+
+  <h3>Why are the numbers in S$ or US$?</h3>
+  <p>Someone (maybe you) switched Display currency to SGD or USD on the Settings page in this browser. It is display only, at fixed demo rates; switch back to INR. All inputs and stored data are always INR.</p>
+
+  <h3>My deal is priced in S$ or USD. Why is the amount empty?</h3>
+  <p>On purpose. Amounts in another currency are <b>never converted</b> by the AI or the code. The record is created with an empty amount and the rep is asked: "What is the agreed INR amount? (No currency conversion is assumed.)" Answer with the INR figure agreed with finance.</p>
+
+  <h3>Why is a deal in this column on Deal Pipeline?</h3>
+  <p>Columns are worked out from the data, never set by hand: <b>Intake</b> = raw text not analysed; <b>Needs review</b> = analysed, not approved; <b>Booked</b> = approved but no approved brief and no invoices; <b>Onboarded</b> = billing plan set but nothing raised yet; <b>Invoicing</b> = some invoices raised, cash outstanding; <b>Collected / Live</b> = everything raised so far is paid. To move a card, do the next thing on its "Next:" line.</p>
+
+  <h3>What does "added by checks" mean?</h3>
+  <p>The AI assumed something (for example a date it was not told, or an unknown partner registration) without asking. Code spotted the assumption and added the question itself, so assumptions cannot reach the books unnoticed. Similarly, a label-conflict note that starts with <b>"(Added by checks)"</b> means the rep labelled the deal one-time but the terms include monthly billing, and the AI did not explain the change, so the code added the explanation.</p>
+
+  <h3>What does "capped by checks" mean?</h3>
+  <p>The AI rated its own confidence higher than the code checks allow (for example because a date was assumed). The code lowered it. The badge always shows the lower, safer value.</p>
+
+  <h3>Why is Approve greyed out?</h3>
+  <p>One of: no name in Approved by; a record has a red error; the practice split does not total 100%; or an acknowledgement tick is needed ("I reviewed the failed checks above" or "I accept N open questions unanswered"). In Onboarding: validator flags are red, or no name.</p>
+
+  <h3>My CSV says "missing required column" or every row is red.</h3>
+  <p>Download the template for the same target table and copy your data into it. Check dates are YYYY-MM-DD, locations are IN or SG, and deal names match an approved deal exactly (the Quick form's dropdown shows the exact names).</p>
+
+  <h3>Approving a brief didn't create invoices.</h3>
+  <p>The deal already had invoices, so the platform skipped creating new ones to avoid double billing (an amber note says so). Reconcile the existing invoices by hand.</p>
+
+  <h3>How accurate is the AI?</h3>
+  <p>See Honesty → AI accuracy (eval) (Figure 3.16): on a small held-out set of 6 invented deals, 0 silent errors, 5/6 fully correct, and the one wrong case was caught. The sets are small and invented, so treat this as evidence the checks work, not as a guarantee.</p>
+
+  <h3>How do I start fresh?</h3>
+  <ol class="steps">
+    <li>Go to <b>Ingest</b>.</li>
+    <li>Click <span class="btn" style="color:#b91c1c">Reset</span> and confirm "Delete ALL rows in every table?". This affects everyone.</li>
+    <li>Click <span class="btn dark">Load demo data</span>. No AI is used.</li>
+  </ol>
+  <p>To restart only one scenario, use <b>Restart case</b> on Try cases instead: it reloads just that case's clients (and, for AI cases, re-runs the analysis).</p>
+</section>
+
+<!-- ============ 13 ============ -->
+<section class="chapter" id="c13">
+  <div class="kicker">Chapter 13</div>
+  <h1>Glossary</h1>
+  <dl class="gl">
+    <dt>Blended deal</dt><dd>One description that mixes one-time work and recurring work (for example a build plus monthly support). The platform splits it into separate records so recurring revenue is not booked as one-time.</dd>
+    <dt>One-time vs recurring</dt><dd>One-time: a fixed fee for a project, stored as a total. Recurring: a monthly amount for a number of months (a retainer), stored as monthly amount × term. ARR (annual recurring revenue) = monthly × 12.</dd>
+    <dt>Close date rule</dt><dd>For a one-time record the close date is the project end (go-live); for a recurring record it is the first billing date. If the text only gives a month, the date is assumed and turned into a question for the rep.</dd>
+    <dt>Booking vs invoicing vs realization</dt><dd>Booking: an approved deal record (contracted value). Invoicing: billing milestones raised as invoices. Realization: cash actually collected against those invoices, before the deadline.</dd>
+    <dt>Clawback</dt><dd>If an invoice is not fully paid by the end of the quarter after it was raised, the owner loses the matching share of the variable pay tied to it (variable pay at stake = an invented 5% of the invoice). Clawback = at stake × (1 − paid by deadline ÷ invoice amount). "Exposure" is the clawback that would happen if nothing more is paid; "at risk" means the deadline is within 60 days.</dd>
+    <dt>Double bubble</dt><dd>Credit for invoiced revenue goes 100% to the consulting owner <i>and</i> to the practice teams by their split, so total credit is about twice the revenue by design. A deal with no practice split is an attribution leak.</dd>
+    <dt>Practice split</dt><dd>How the practice credit is shared across AI, Web, Cloud and Data; must total 100%.</dd>
+    <dt>MDF</dt><dd>Market Development Funds: money a partner (for example AWS) contributes towards a deal. It is partner funding, not revenue, so it is kept out of deal amounts and tracked as something to claim.</dd>
+    <dt>Deal registration</dt><dd>Registering a co-sell deal with the partner so the partner attribution and benefits apply. Unregistered partner deals raise a warning.</dd>
+    <dt>Co-sell</dt><dd>Selling a deal together with a partner such as AWS, Microsoft or Google Cloud.</dd>
+    <dt>Blended rate</dt><dd>The average hourly delivery cost across India and Singapore hours: (IN hours × ₹2,000 + SG hours × ₹6,500) ÷ total hours.</dd>
+    <dt>Margin floor / target</dt><dd>Margin % = (price − delivery cost) ÷ price. Below the 30% <b>floor</b> is a critical warning; the <b>target</b> (plan, default 40%) is what the deal should make. Erosion = target − actual.</dd>
+    <dt>Rep inbox</dt><dd>The page where a sales rep sees what the AI understood from their deals and answers its questions. Answers are written into the deal, saved with the rep's name, and trigger an automatic re-check.</dd>
+    <dt>Read-back</dt><dd>The plain-language summary in the Rep inbox of what the AI understood ("One-time project … for ₹18,00,000, ending 31 Mar 2027"), with "(assumed)" where it guessed.</dd>
+    <dt>Follow-up draft</dt><dd>A message (payment chase, change request or renewal note) the AI drafts automatically when a serious leak appears. Shown in Diagnose with a ₹-figure check; never sent by the platform.</dd>
+    <dt>₹-figure check</dt><dd>Code that compares every ₹ amount in an AI-written message with the deal's real data and lists any that don't match.</dd>
+    <dt>Added by checks</dt><dd>A question or note the code added because the AI assumed something without saying so (an assumed date, unknown registration, an unexplained label override).</dd>
+    <dt>Foreign-currency flag</dt><dd>When a deal mentions S$, SGD, USD or $, the amount is never converted; the record's amount is left empty and the rep is asked for the agreed INR amount.</dd>
+    <dt>Validator / checks</dt><dd>Plain code that re-checks every amount, date, type, name and partner field the AI proposes, and every billing milestone. Failed checks force low confidence or block approval.</dd>
+    <dt>Silent error</dt><dd>An AI proposal that is wrong but looks clean (no flag, not low confidence, no question), so a human could approve it. The eval's headline metric.</dd>
+    <dt>AI reserve</dt><dd>The number of AI calls kept back for manual use; automation pauses when only this many are left (default 5, set on Settings).</dd>
+    <dt>As-of date</dt><dd>A "time machine" date on Dashboard and Clawback. Shows what deadlines and exposure would look like on that date; payments after it are ignored. Nothing is saved.</dd>
+    <dt>AI call</dt><dd>One request to the AI. The project has a hard cap of 100, shared by everyone.</dd>
+  </dl>
+</section>
+
+</body>
+</html>
