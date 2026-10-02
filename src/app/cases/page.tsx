@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { EngineBadge } from "@/components/EngineBadge";
 import { PageHeader } from "@/components/PageHeader";
+import { ManualLoopModal } from "./ManualLoopModal";
 
 type CaseView = {
   key: string;
@@ -21,6 +22,7 @@ export default function CasesPage() {
   const [cases, setCases] = useState<CaseView[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [loopFor, setLoopFor] = useState<CaseView | null>(null);
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/cases", { cache: "no-store" });
@@ -85,6 +87,12 @@ export default function CasesPage() {
                 >
                   {busy === c.key ? "Loading…" : c.loaded ? "Restart case" : "Load case"}
                 </button>
+                <button
+                  onClick={() => setLoopFor(c)}
+                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50"
+                >
+                  See Manual Loop
+                </button>
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
                   <div
                     className={`h-full ${complete ? "bg-emerald-500" : "bg-zinc-800"}`}
@@ -144,6 +152,7 @@ export default function CasesPage() {
         Steps with a dashed circle are look-and-see; the rest tick automatically from the database. This page re-checks
         when you switch back to it.
       </p>
+      {loopFor && <ManualLoopModal caseKey={loopFor.key} title={loopFor.title} onClose={() => setLoopFor(null)} />}
     </>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { DiagnosePanel } from "./DiagnosePanel";
+import { ValuePanel } from "./ValuePanel";
 import { DEMO_TODAY, isISODate, type ClawbackStatus } from "@/lib/clawback";
 import {
   NO_FILTERS,
@@ -76,6 +78,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [version, setVersion] = useState(0); // bumps when a Diagnose action changes data
 
   // Read the shareable URL once on mount (no useSearchParams, so no Suspense boundary).
   useEffect(() => {
@@ -105,7 +108,7 @@ export default function DashboardPage() {
     return () => {
       live = false;
     };
-  }, [asOf]);
+  }, [asOf, version]);
 
   const set = (patch: Partial<View>) => {
     if (patch.asOf && patch.asOf !== view?.asOf) setLoading(true);
@@ -116,12 +119,17 @@ export default function DashboardPage() {
   return (
     <TipProvider>
       <PageHeader title="Dashboard" engine="rules">
-        The whole revenue flow at a glance. Move the as-of date to replay clawback deadlines; filters slice every chart.
+        Diagnose where money and margin leak, act on it here, and see the value. Move the as-of date to replay deadlines; filters slice the charts.
       </PageHeader>
 
       <Controls view={view ?? DEFAULT_VIEW} data={data} set={set} />
 
       {error && <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">{error}</div>}
+
+      {asOf && <DiagnosePanel asOf={asOf} onChanged={() => setVersion((n) => n + 1)} />}
+      {asOf && <ValuePanel asOf={asOf} version={version} />}
+
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">Charts</h2>
 
       {!slice ? (
         <Skeleton />
