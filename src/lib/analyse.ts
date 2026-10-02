@@ -28,7 +28,9 @@ export async function analyseRawDeal(rawDealId: string, answers: RepAnswer[] = [
   });
   if (!ai.ok) return { ok: false, ai };
 
-  const output = ensureQuestions(ai.data, answers);
+  // Only code may tag a question "added by checks": drop the tag if the model set it.
+  const fromModel = { ...ai.data, ambiguities: ai.data.ambiguities.map((q) => ({ question: q.question, field: q.field, record_index: q.record_index })) };
+  const output = ensureQuestions(fromModel, answers);
   const validation = validateProposal(raw.raw_text, output, today, answers);
   const analysis = must(
     await db()

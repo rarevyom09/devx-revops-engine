@@ -60,7 +60,10 @@ export async function POST(req: Request) {
       return Response.json({ error: "Record names must be unique" }, { status: 400 });
     }
     const now = new Date().toISOString();
-    const rows = b.records.map((r) => ({
+    // MDF belongs to the deal, not each record: carry it on one record only
+    // (the one-time record if there is one) so it isn't counted twice.
+    const mdfIndex = Math.max(0, b.records.findIndex((r) => r.deal_type === "one_time"));
+    const rows = b.records.map((r, i) => ({
       raw_deal_id: raw.id,
       name: r.name,
       deal_type: r.deal_type,
@@ -71,7 +74,14 @@ export async function POST(req: Request) {
       practice_split: b.practice_split,
       partner: b.partner?.name ?? null,
       partner_flags: b.partner
-        ? { type: b.partner.type, mdf_amount: b.partner.mdf_amount, deal_registered: b.partner.deal_registered, needs_review: true, analysis_id: b.analysis_id }
+        ? {
+            type: b.partner.type,
+            mdf_amount: i === mdfIndex ? b.partner.mdf_amount : null,
+            ...(i !== mdfIndex && b.partner.mdf_amount ? { mdf_on: b.records[mdfIndex].name } : {}),
+            deal_registered: b.partner.deal_registered,
+            needs_review: true,
+            analysis_id: b.analysis_id,
+          }
         : { analysis_id: b.analysis_id },
       approved_by: b.approved_by,
       approved_at: now,
